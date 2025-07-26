@@ -1,0 +1,33 @@
+<resources xmlns:tools="http://schemas.android.com/tools">
+    <!-- Base application theme. -->
+    <style name="Base.Theme.AI_Projects" parent="Theme.Material3.DayNight.NoActionBar">
+        <!-- Primary brand color. -->
+        <item name="colorPrimary">@color/purple_primary</item>
+        <item name="colorPrimaryVariant">@color/purple_primary_variant</item>
+        <item name="colorOnPrimary">@color/purple_on_primary</item>
+        <!-- Secondary brand color. -->
+        <item name="colorSecondary">@color/plum_secondary</item>
+        <item name="colorSecondaryVariant">@color/plum_secondary_variant</item>
+        <item name="colorOnSecondary">@color/plum_on_secondary</item>
+        <!-- Status bar color. -->
+        <item name="android:statusBarColor">?attr/colorPrimaryVariant</item>
+        <!-- Customize your theme here. -->
+        <!-- You can also add custom attributes for your accent colors if needed -->
+        <!-- <item name="colorAccentLight">@color/light_purple_accent</item> -->
+        <!-- <item name="colorAccentDark">@color/dark_plum_accent</item> -->
+    </style>
+
+    <!-- Optional: NoActionBar theme -->
+    <style name="Theme.AI_Projects.NoActionBar">
+        <item name="windowActionBar">false</item>
+        <item name="windowNoTitle">true</item>
+    </style>
+
+    <!-- Optional: AppBar and PopupOverlay themes (can often remain as is) -->
+    <style name="Theme.AI_Projects.AppBarOverlay" parent="ThemeOverlay.AppCompat.Dark.ActionBar" />
+    <style name="Theme.AI_Projects.PopupOverlay" parent="ThemeOverlay.AppCompat.Light" />
+
+    <style name="Theme.AI_Projects" parent="Base.Theme.AI_Projects" />
+
+
+</resources>

@@ -1,0 +1,20 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <color name="black">#FF000000</color>
+    <color name="white">#FFFFFFFF</color>
+
+    <!-- Purple Shades -->
+    <color name="purple_primary">#6A1B9A</color> <!-- A deep, rich purple -->
+    <color name="purple_primary_variant">#4A148C</color> <!-- A darker shade for status bars, etc. -->
+    <color name="purple_on_primary">#FFFFFF</color> <!-- White for text/icons on primary color -->
+
+    <!-- Plum Shades -->
+    <color name="plum_secondary">#8E24AA</color> <!-- A vibrant plum -->
+    <color name="plum_secondary_variant">#6A0080</color> <!-- A darker plum for variations -->
+    <color name="plum_on_secondary">#FFFFFF</color> <!-- White for text/icons on secondary color -->
+
+    <!-- Optional: Additional accent colors -->
+    <color name="light_purple_accent">#E1BEE7</color> <!-- A lighter purple for accents -->
+    <color name="dark_plum_accent">#38006B</color> <!-- A very dark plum for subtle accents -->
+
+</resources>
