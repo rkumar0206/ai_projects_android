@@ -1,0 +1,117 @@
+<?xml version="1.0" encoding="utf-8"?>
+<androidx.constraintlayout.widget.ConstraintLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:id="@+id/main"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    tools:context=".ui.feature_prompt_refiner.PromptRefinerActivity">
+
+    <!-- Material Toolbar -->
+    <com.google.android.material.appbar.AppBarLayout
+        android:id="@+id/appBarLayout"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:fitsSystemWindows="true"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toTopOf="parent">
+
+        <com.google.android.material.appbar.MaterialToolbar
+            android:id="@+id/toolbar"
+            android:layout_width="match_parent"
+            android:layout_height="?attr/actionBarSize"
+            app:title="@string/title_prompt_refiner" />
+
+    </com.google.android.material.appbar.AppBarLayout>
+
+
+    <!-- Material Design Multiline EditText -->
+    <com.google.android.material.textfield.TextInputLayout
+        android:id="@+id/textInputLayoutPrompt"
+        style="@style/Widget.MaterialComponents.TextInputLayout.OutlinedBox"
+        android:layout_width="0dp"
+        android:layout_height="wrap_content"
+        android:layout_marginStart="8dp"
+        android:layout_marginTop="4dp"
+        android:layout_marginEnd="8dp"
+        android:hint="@string/enter_your_prompt_here"
+        app:counterEnabled="true"
+        app:counterMaxLength="3000"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toBottomOf="@+id/appBarLayout">
+
+        <com.google.android.material.textfield.TextInputEditText
+            android:id="@+id/promptET"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:gravity="top|start"
+            android:inputType="textMultiLine"
+            android:maxLines="8"
+            android:minLines="3"
+            android:maxLength="3000"
+            android:scrollbars="vertical" />
+    </com.google.android.material.textfield.TextInputLayout>
+
+    <!-- Submit Button -->
+    <com.google.android.material.button.MaterialButton
+        android:id="@+id/buttonSubmitPrompt"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="16dp"
+        android:text="@string/submit"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toBottomOf="@id/textInputLayoutPrompt" />
+
+    <!-- Loading Spinner (ProgressBar) -->
+    <com.google.android.material.progressindicator.CircularProgressIndicator
+        android:id="@+id/progressBarLoading"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:indeterminate="true"
+        android:visibility="gone"
+        app:indicatorSize="24dp"
+        app:layout_constraintBottom_toBottomOf="@id/buttonSubmitPrompt"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toTopOf="@id/buttonSubmitPrompt"
+        tools:visibility="visible" />
+
+
+    <!-- Copy Icon -->
+    <ImageButton
+        android:id="@+id/imageViewCopyResult"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:background="?attr/selectableItemBackgroundBorderless"
+        android:contentDescription="@string/copy_result_to_clipboard"
+        android:padding="8dp"
+        android:src="@drawable/ic_copy"
+        android:visibility="gone"
+        app:layout_constraintBottom_toBottomOf="@+id/buttonSubmitPrompt"
+        app:layout_constraintEnd_toEndOf="@+id/textViewResult"
+        app:layout_constraintTop_toTopOf="@+id/buttonSubmitPrompt"
+        tools:visibility="visible" />
+
+    <!-- Scrollable TextView for Results -->
+    <TextView
+        android:id="@+id/textViewResult"
+        android:layout_width="0dp"
+        android:layout_height="0dp"
+        android:layout_marginStart="8dp"
+        android:layout_marginTop="16dp"
+        android:layout_marginEnd="8dp"
+        android:background="@drawable/textview_border"
+        android:fadeScrollbars="false"
+        android:padding="8dp"
+        android:scrollbars="vertical"
+        android:textAppearance="?attr/textAppearanceBody1"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toBottomOf="@+id/buttonSubmitPrompt"
+        tools:text="This is where the refined prompt or result will appear. It can be quite long and should be scrollable if the content exceeds the available space." />
+
+</androidx.constraintlayout.widget.ConstraintLayout>
