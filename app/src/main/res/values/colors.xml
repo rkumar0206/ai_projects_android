@@ -1,7 +1,9 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
     <color name="black">#FF000000</color>
+    <color name="dark_gray">#FF444444</color>"
     <color name="white">#FFFFFFFF</color>
+    <color name="light_gray">#FFCCCCCC</color>
 
     <!-- Purple Shades -->
     <color name="purple_primary">#6A1B9A</color> <!-- A deep, rich purple -->

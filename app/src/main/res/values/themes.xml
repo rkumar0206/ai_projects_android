@@ -11,6 +11,10 @@
         <item name="colorOnSecondary">@color/plum_on_secondary</item>
         <!-- Status bar color. -->
         <item name="android:statusBarColor">?attr/colorPrimaryVariant</item>
+        <!-- ... -->
+        <item name="colorControlNormal">@color/dark_gray</item> <!-- e.g., a dark gray -->
+        <item name="colorOnSurface">@color/black</item> <!-- e.g., black -->
+        <!-- ... -->
         <!-- Customize your theme here. -->
         <!-- You can also add custom attributes for your accent colors if needed -->
         <!-- <item name="colorAccentLight">@color/light_purple_accent</item> -->
