@@ -8,6 +8,7 @@ import android.view.View
 import android.view.inputmethod.InputMethodManager
 import android.widget.TextView
 import android.widget.Toast
+import com.google.gson.Gson
 import io.noties.markwon.Markwon
 import io.noties.markwon.html.HtmlPlugin // If using HTML plugin
 
@@ -46,5 +47,27 @@ object AppUtil {
 
         // Set the Markdown text directly to the TextView
         markwon.setMarkdown(this, markdownString)
+    }
+
+    fun <T> T.convertToJsonString(): String? {
+
+        return try {
+
+            Gson().toJson(this)
+
+        } catch (e: Exception) {
+            e.printStackTrace()
+            null
+        }
+    }
+
+    fun <T> String.convertJsonToObject(clazz: Class<T>): T? {
+
+        return try {
+            Gson().fromJson(this, clazz)
+        } catch (e: Exception) {
+            e.printStackTrace()
+            null
+        }
     }
 }

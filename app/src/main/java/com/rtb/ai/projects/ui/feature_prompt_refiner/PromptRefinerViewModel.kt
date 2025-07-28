@@ -81,7 +81,7 @@ class PromptRefinerViewModel @Inject constructor(
 
         viewModelScope.launch {
             val prompt = _uiState.value.promptInput
-            geminiAPIHelper.refinePrompt(generatePrompt(prompt))
+            geminiAPIHelper.getPromptTextResult(generatePrompt(prompt))
                 .onSuccess { result ->
 
                     var refinedPrompt = ""

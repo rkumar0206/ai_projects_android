@@ -1,6 +1,7 @@
 package com.rtb.ai.projects.di
 
 import com.google.genai.Client
+import com.google.gson.Gson
 import com.rtb.ai.projects.BuildConfig
 import com.rtb.ai.projects.util.GeminiAiHelper
 import dagger.Module

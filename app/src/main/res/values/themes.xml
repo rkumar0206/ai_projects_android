@@ -29,6 +29,7 @@
 
     <!-- Optional: AppBar and PopupOverlay themes (can often remain as is) -->
     <style name="Theme.AI_Projects.AppBarOverlay" parent="ThemeOverlay.AppCompat.Dark.ActionBar" />
+
     <style name="Theme.AI_Projects.PopupOverlay" parent="ThemeOverlay.AppCompat.Light" />
 
     <style name="Theme.AI_Projects" parent="Base.Theme.AI_Projects" />

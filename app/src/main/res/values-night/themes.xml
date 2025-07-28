@@ -3,11 +3,13 @@
     <style name="Base.Theme.AI_Projects" parent="Theme.Material3.DayNight.NoActionBar">
         <!-- Primary brand color. -->
         <item name="colorPrimary">@color/purple_primary</item> <!-- Or a darker purple for night -->
-        <item name="colorPrimaryVariant">@color/purple_primary_variant</item> <!-- Or a darker variant -->
+        <item name="colorPrimaryVariant">@color/purple_primary_variant
+        </item> <!-- Or a darker variant -->
         <item name="colorOnPrimary">@color/purple_on_primary</item>
         <!-- Secondary brand color. -->
         <item name="colorSecondary">@color/plum_secondary</item> <!-- Or a darker plum for night -->
-        <item name="colorSecondaryVariant">@color/plum_secondary_variant</item> <!-- Or a darker variant -->
+        <item name="colorSecondaryVariant">@color/plum_secondary_variant
+        </item> <!-- Or a darker variant -->
         <item name="colorOnSecondary">@color/plum_on_secondary</item>
         <!-- Status bar color. -->
         <item name="android:statusBarColor">?attr/colorPrimaryVariant</item>

@@ -3,19 +3,18 @@ package com.rtb.ai.projects.ui
 import android.content.Intent
 import android.os.Bundle
 import androidx.appcompat.app.AppCompatActivity
-import androidx.navigation.ui.AppBarConfiguration
 import androidx.recyclerview.widget.GridLayoutManager
 import com.rtb.ai.projects.R
 import com.rtb.ai.projects.data.model.AIProjectCategory
 import com.rtb.ai.projects.databinding.ActivityMainBinding
 import com.rtb.ai.projects.ui.adapters.AIProjectsCategoriesAdapter
 import com.rtb.ai.projects.ui.feature_prompt_refiner.PromptRefinerActivity
+import com.rtb.ai.projects.ui.feature_the_random_value.TheRandomValueActivity
 import dagger.hilt.android.AndroidEntryPoint
 
 @AndroidEntryPoint
 class MainActivity : AppCompatActivity() {
 
-    //private lateinit var appBarConfiguration: AppBarConfiguration
     private lateinit var binding: ActivityMainBinding
     private lateinit var projectCategoryAdapter: AIProjectsCategoriesAdapter
 
@@ -28,12 +27,6 @@ class MainActivity : AppCompatActivity() {
         initRecyclerView()
 
         setSupportActionBar(binding.toolbar)
-
-//        val navController = findNavController(R.id.nav_host_fragment_content_main)
-//        appBarConfiguration = AppBarConfiguration(navController.graph)
-//        setupActionBarWithNavController(navController, appBarConfiguration)
-
-
     }
 
     private fun initRecyclerView() {
@@ -59,6 +52,11 @@ class MainActivity : AppCompatActivity() {
                 val intent = Intent(this@MainActivity, PromptRefinerActivity::class.java)
                 startActivity(intent)
             }
+
+            1 -> {
+                val intent = Intent(this@MainActivity, TheRandomValueActivity::class.java)
+                startActivity(intent)
+            }
         }
 
     }
@@ -73,26 +71,4 @@ class MainActivity : AppCompatActivity() {
             )
         )
     }
-
-//    override fun onCreateOptionsMenu(menu: Menu): Boolean {
-//        // Inflate the menu; this adds items to the action bar if it is present.
-//        menuInflater.inflate(R.menu.menu_main, menu)
-//        return true
-//    }
-//
-//    override fun onOptionsItemSelected(item: MenuItem): Boolean {
-//        // Handle action bar item clicks here. The action bar will
-//        // automatically handle clicks on the Home/Up button, so long
-//        // as you specify a parent activity in AndroidManifest.xml.
-//        return when (item.itemId) {
-//            R.id.action_settings -> true
-//            else -> super.onOptionsItemSelected(item)
-//        }
-//    }
-
-//    override fun onSupportNavigateUp(): Boolean {
-//        val navController = findNavController(R.id.nav_host_fragment_content_main)
-//        return navController.navigateUp(appBarConfiguration)
-//                || super.onSupportNavigateUp()
-//    }
 }

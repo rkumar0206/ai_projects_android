@@ -1,5 +1,6 @@
 [versions]
 agp = "8.11.1"
+glide = "4.16.0"
 markwonCore = "4.6.2"
 googleGenai = "1.10.0"
 hiltAndroid = "2.57"
@@ -15,9 +16,15 @@ navigationFragmentKtx = "2.9.2"
 navigationUiKtx = "2.9.2"
 recyclerview = "1.4.0"
 activity = "1.10.1"
+legacySupportV4 = "1.0.0"
+lifecycleLivedataKtx = "2.9.2"
+lifecycleViewmodelKtx = "2.9.2"
+fragmentKtx = "1.5.6"
 
 [libraries]
 androidx-core-ktx = { group = "androidx.core", name = "core-ktx", version.ref = "coreKtx" }
+glide-compiler = { module = "com.github.bumptech.glide:compiler", version.ref = "glide" }
+glide = { module = "com.github.bumptech.glide:glide", version.ref = "glide" }
 markwon-core = { module = "io.noties.markwon:core", version.ref = "markwonCore" }
 google-genai = { module = "com.google.genai:google-genai", version.ref = "googleGenai" }
 hilt-android = { module = "com.google.dagger:hilt-android", version.ref = "hiltAndroid" }
@@ -34,6 +41,10 @@ androidx-navigation-ui-ktx = { group = "androidx.navigation", name = "navigation
 androidx-recyclerview = { group = "androidx.recyclerview", name = "recyclerview", version.ref = "recyclerview" }
 androidx-activity = { group = "androidx.activity", name = "activity", version.ref = "activity" }
 markwon-syntax-highlight = { module = "io.noties.markwon:syntax-highlight", version.ref = "markwonCore" }
+androidx-legacy-support-v4 = { group = "androidx.legacy", name = "legacy-support-v4", version.ref = "legacySupportV4" }
+androidx-lifecycle-livedata-ktx = { group = "androidx.lifecycle", name = "lifecycle-livedata-ktx", version.ref = "lifecycleLivedataKtx" }
+androidx-lifecycle-viewmodel-ktx = { group = "androidx.lifecycle", name = "lifecycle-viewmodel-ktx", version.ref = "lifecycleViewmodelKtx" }
+androidx-fragment-ktx = { group = "androidx.fragment", name = "fragment-ktx", version.ref = "fragmentKtx" }
 
 [plugins]
 android-application = { id = "com.android.application", version.ref = "agp" }

@@ -94,7 +94,11 @@ dependencies {
     implementation(libs.google.genai)
     // Hilt
     implementation(libs.hilt.android)
-    implementation(libs.androidx.activity) // Use the same version as the plugin
+    implementation(libs.androidx.activity)
+    implementation(libs.androidx.legacy.support.v4)
+    implementation(libs.androidx.lifecycle.livedata.ktx)
+    implementation(libs.androidx.lifecycle.viewmodel.ktx)
+    implementation(libs.androidx.fragment.ktx) // Use the same version as the plugin
     kapt(libs.hilt.compiler)         // Use the same version as the plugin
 
     // Markwon for markdown support
@@ -106,6 +110,10 @@ dependencies {
     // implementation("io.noties.markwon:ext-tables:4.6.2") // For tables
     // implementation("io.noties.markwon:ext-strikethrough:4.6.2")
     // implementation("io.noties.markwon:ext-tasklist:4.6.2")
+
+    //Glide
+    implementation(libs.glide)
+    kapt(libs.glide.compiler)
 
     implementation(libs.androidx.recyclerview)
     testImplementation(libs.junit)

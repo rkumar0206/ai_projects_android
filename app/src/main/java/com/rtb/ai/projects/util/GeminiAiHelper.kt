@@ -11,7 +11,7 @@ class GeminiAiHelper @Inject constructor(
     private val client: Client
 ) {
 
-    suspend fun refinePrompt(prompt: String): Result<String?> {
+    suspend fun getPromptTextResult(prompt: String): Result<String?> {
 
         return try {
             if (prompt.isBlank()) {

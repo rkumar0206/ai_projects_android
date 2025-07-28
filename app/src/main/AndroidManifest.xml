@@ -3,7 +3,7 @@
     xmlns:tools="http://schemas.android.com/tools">
 
     <uses-permission android:name="android.permission.INTERNET" />
-    
+
     <application
         android:name=".AiProjectApplication"
         android:allowBackup="true"
@@ -15,11 +15,14 @@
         android:supportsRtl="true"
         android:theme="@style/Theme.AI_Projects">
         <activity
+            android:name=".ui.feature_the_random_value.TheRandomValueActivity"
+            android:exported="false"
+            android:theme="@style/Theme.AI_Projects" />
+        <activity
             android:name=".ui.feature_prompt_refiner.PromptRefinerActivity"
             android:exported="false"
-            android:theme="@style/Theme.AI_Projects.NoActionBar"
             android:parentActivityName=".ui.MainActivity"
-            />
+            android:theme="@style/Theme.AI_Projects.NoActionBar" />
         <activity
             android:name=".ui.MainActivity"
             android:exported="true"

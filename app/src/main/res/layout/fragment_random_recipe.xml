@@ -1,0 +1,185 @@
+<?xml version="1.0" encoding="utf-8"?>
+<androidx.constraintlayout.widget.ConstraintLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    tools:context=".ui.feature_the_random_value.feature_food_recipe.RandomRecipeFragment">
+
+    <!-- ImageView for Recipe Image -->
+    <ImageView
+        android:id="@+id/imageViewRecipe"
+        android:layout_width="0dp"
+        android:layout_height="200dp"
+        android:contentDescription="@string/recipe_image"
+        android:scaleType="centerInside"
+        android:src="@drawable/food_recipe_img"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toTopOf="parent"
+        tools:srcCompat="@tools:sample/backgrounds/scenic" /> <!-- Placeholder image -->
+
+
+    <View
+        android:id="@+id/divider2"
+        android:layout_width="0dp"
+        android:layout_height="200dp"
+        android:visibility="invisible"
+        tools:visibility="visible"
+        app:layout_constraintBottom_toBottomOf="@+id/imageViewRecipe"
+        app:layout_constraintEnd_toEndOf="@+id/imageViewRecipe"
+        app:layout_constraintStart_toStartOf="@+id/imageViewRecipe"
+        app:layout_constraintTop_toTopOf="@+id/imageViewRecipe"
+        android:background="?android:attr/listDivider"
+        tools:layout_editor_absoluteX="1dp"
+        tools:layout_editor_absoluteY="107dp" />
+
+
+    <!-- Loading Spinner (ProgressBar) -->
+    <com.google.android.material.progressindicator.CircularProgressIndicator
+        android:id="@+id/progressBarLoading"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:indeterminate="true"
+        android:visibility="gone"
+        app:indicatorSize="24dp"
+        app:layout_constraintBottom_toBottomOf="@+id/divider2"
+        app:layout_constraintEnd_toEndOf="@+id/divider2"
+        app:layout_constraintStart_toStartOf="@+id/divider2"
+        app:layout_constraintTop_toTopOf="@+id/divider2"
+        tools:visibility="visible" />
+
+    <!-- TextView for Recipe Name -->
+    <TextView
+        android:id="@+id/textViewRecipeName"
+        android:layout_width="0dp"
+        android:layout_height="wrap_content"
+        android:layout_marginStart="16dp"
+        android:layout_marginTop="16dp"
+        android:layout_marginEnd="16dp"
+        android:textAlignment="center"
+        android:text="@string/loading"
+        android:textAppearance="?attr/textAppearanceHeadline6"
+        android:textStyle="bold"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toBottomOf="@id/imageViewRecipe"
+        tools:text="Delicious Pasta Carbonara" />
+
+    <!-- Labels for Yield, Prep Time, Cook Time -->
+    <TextView
+        android:id="@+id/textViewLabelYield"
+        android:layout_width="0dp"
+        android:layout_height="wrap_content"
+        android:layout_marginStart="16dp"
+        android:layout_marginTop="16dp"
+        android:layout_marginEnd="4dp"
+        android:background="@drawable/textview_border"
+        android:text="@string/yield_label"
+        android:textAlignment="center"
+        android:textAppearance="?attr/textAppearanceSubtitle2"
+        android:textStyle="bold"
+        app:layout_constraintEnd_toStartOf="@+id/textViewLabelPrepTime"
+        app:layout_constraintHorizontal_chainStyle="spread_inside"
+        app:layout_constraintHorizontal_weight="1"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toBottomOf="@id/textViewRecipeName" />
+
+    <TextView
+        android:id="@+id/textViewLabelPrepTime"
+        android:layout_width="0dp"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="16dp"
+        android:layout_marginEnd="4dp"
+        android:background="@drawable/textview_border"
+        android:text="@string/prep_time_label"
+        android:textAlignment="center"
+        android:textAppearance="?attr/textAppearanceSubtitle2"
+        android:textStyle="bold"
+        app:layout_constraintEnd_toStartOf="@+id/textViewLabelCookTime"
+        app:layout_constraintHorizontal_weight="1"
+        app:layout_constraintStart_toEndOf="@id/textViewLabelYield"
+        app:layout_constraintTop_toBottomOf="@id/textViewRecipeName" />
+
+    <TextView
+        android:id="@+id/textViewLabelCookTime"
+        android:layout_width="0dp"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="16dp"
+        android:layout_marginEnd="16dp"
+        android:background="@drawable/textview_border"
+        android:text="@string/cook_time_label"
+        android:textAlignment="center"
+        android:textAppearance="?attr/textAppearanceSubtitle2"
+        android:textStyle="bold"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintHorizontal_weight="1"
+        app:layout_constraintStart_toEndOf="@id/textViewLabelPrepTime"
+        app:layout_constraintTop_toBottomOf="@id/textViewRecipeName" />
+
+    <!-- Values for Yield, Prep Time, Cook Time -->
+    <TextView
+        android:id="@+id/textViewValueYield"
+        android:layout_width="0dp"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="4dp"
+        android:text="@string/loading"
+        android:textAlignment="center"
+        android:textAppearance="?attr/textAppearanceBody1"
+        app:layout_constraintEnd_toEndOf="@id/textViewLabelYield"
+        app:layout_constraintStart_toStartOf="@id/textViewLabelYield"
+        app:layout_constraintTop_toBottomOf="@id/textViewLabelYield"
+        tools:text="4 Servings"
+
+        />
+
+    <TextView
+        android:id="@+id/textViewValuePrepTime"
+        android:layout_width="0dp"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="4dp"
+        android:text="@string/loading"
+        android:textAlignment="center"
+        android:textAppearance="?attr/textAppearanceBody1"
+        app:layout_constraintEnd_toEndOf="@id/textViewLabelPrepTime"
+        app:layout_constraintStart_toStartOf="@id/textViewLabelPrepTime"
+        app:layout_constraintTop_toBottomOf="@id/textViewLabelPrepTime"
+        tools:text="15 mins"
+
+        />
+
+    <TextView
+        android:id="@+id/textViewValueCookTime"
+        android:layout_width="0dp"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="4dp"
+        android:text="@string/loading"
+        android:textAlignment="center"
+        android:textAppearance="?attr/textAppearanceBody1"
+        app:layout_constraintEnd_toEndOf="@id/textViewLabelCookTime"
+        app:layout_constraintStart_toStartOf="@id/textViewLabelCookTime"
+        app:layout_constraintTop_toBottomOf="@id/textViewLabelCookTime"
+        tools:text="20 mins" />
+
+
+    <TextView
+        android:id="@+id/textViewIngredientsAndInstructions"
+        android:layout_width="0dp"
+        android:layout_height="0dp"
+        android:layout_marginStart="8dp"
+        android:layout_marginTop="16dp"
+        android:layout_marginEnd="8dp"
+        android:layout_marginBottom="4dp"
+        android:background="@drawable/textview_border"
+        android:fadeScrollbars="false"
+        android:padding="8dp"
+        android:text="@string/loading"
+        android:scrollbars="vertical"
+        android:textAppearance="?attr/textAppearanceBody1"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toBottomOf="@+id/textViewValueYield"
+        tools:text="This is where the refined prompt or result will appear. It can be quite long and should be scrollable if the content exceeds the available space." />
+
+</androidx.constraintlayout.widget.ConstraintLayout>
