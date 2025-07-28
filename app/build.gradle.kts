@@ -4,8 +4,9 @@ import java.util.Properties
 plugins {
     alias(libs.plugins.android.application)
     alias(libs.plugins.kotlin.android)
-    id("kotlin-kapt")
+    id("com.google.devtools.ksp")
     id("com.google.dagger.hilt.android")
+    id("androidx.room")
 }
 
 // Function to read a property from local.properties
@@ -15,7 +16,8 @@ fun getLocalProperty(propertyName: String, project: Project): String {
     if (propFile.exists()) {
         FileInputStream(propFile).use { properties.load(it) }
     }
-    return properties.getProperty(propertyName, "") ?: "" // Return empty string if null or not found
+    return properties.getProperty(propertyName, "")
+        ?: "" // Return empty string if null or not found
 }
 
 android {
@@ -70,7 +72,7 @@ android {
         // resources.pickFirsts.add("META-INF/NOTICE")
         // resources.pickFirsts.add("META-INF/NOTICE.txt")
         // resources.pickFirsts.add("META-INF/ASL2.0")
-         resources.pickFirsts.add("META-INF/DEPENDENCIES")
+        resources.pickFirsts.add("META-INF/DEPENDENCIES")
         // resources.pickFirsts.add("META-INF/LGPL2.1")
         // resources.excludes.add("META-INF/kotlin-tooling-metadata.json") // Example
     }
@@ -80,6 +82,10 @@ android {
             force("org.jetbrains:annotations:23.0.0")
         }
         exclude(group = "org.jetbrains", module = "annotations-java5") // Add this
+    }
+
+    room {
+        schemaDirectory("$projectDir/schemas")
     }
 }
 
@@ -99,7 +105,7 @@ dependencies {
     implementation(libs.androidx.lifecycle.livedata.ktx)
     implementation(libs.androidx.lifecycle.viewmodel.ktx)
     implementation(libs.androidx.fragment.ktx) // Use the same version as the plugin
-    kapt(libs.hilt.compiler)         // Use the same version as the plugin
+    ksp(libs.hilt.compiler)         // Use the same version as the plugin
 
     // Markwon for markdown support
     implementation(libs.markwon.core) // Check for the latest version
@@ -113,7 +119,16 @@ dependencies {
 
     //Glide
     implementation(libs.glide)
-    kapt(libs.glide.compiler)
+    ksp(libs.glide.compiler)
+
+    //Room db
+    implementation(libs.androidx.room.runtime)
+    implementation(libs.androidx.room.ktx)
+    ksp(libs.androidx.room.compiler)
+
+    // Coroutines
+    implementation(libs.kotlinx.coroutines.core)
+    implementation(libs.kotlinx.coroutines.android)
 
     implementation(libs.androidx.recyclerview)
     testImplementation(libs.junit)

@@ -72,18 +72,7 @@ class RandomRecipeFragment : Fragment() {
     private fun observeViewModel() {
         viewModel.recipeUiState.observe(viewLifecycleOwner) { state ->
 
-            if (state.isLoading) {
-
-                binding.imageViewRecipe.visibility = View.INVISIBLE
-                binding.progressBarLoading.visibility = View.VISIBLE
-                binding.divider2.visibility = View.VISIBLE
-
-            } else {
-
-                binding.imageViewRecipe.visibility = View.VISIBLE
-                binding.progressBarLoading.visibility = View.INVISIBLE
-                binding.divider2.visibility = View.INVISIBLE
-
+            if (!state.isLoading) {
                 // binding.progressBarRecipe.visibility = View.GONE
                 if (state == null || state.errorMessage != null) {
                     Toast.makeText(requireContext(), state.errorMessage, Toast.LENGTH_LONG).show()
@@ -96,19 +85,6 @@ class RandomRecipeFragment : Fragment() {
                     binding.textViewValuePrepTime.text = state.prepTime
                     binding.textViewValueCookTime.text = state.cookTime
                     binding.textViewIngredientsAndInstructions.displayMarkdownWithMarkwon(requireContext(), state.ingredientsAndInstruction)
-
-                    if (state.imageUrl != null) {
-                        Glide.with(this)
-                            .load(state.imageUrl)
-                            .placeholder(R.drawable.food_recipe_img) // Your placeholder
-                            .error(R.drawable.ic_broken_image) // Error placeholder
-                            .into(binding.imageViewRecipe)
-
-                        binding.imageViewRecipe.visibility = View.VISIBLE
-                    } else {
-                        // Use a default placeholder if no image URL
-                        binding.imageViewRecipe.setImageResource(R.drawable.food_recipe_img)
-                    }
                 }
             }
         }
@@ -121,6 +97,33 @@ class RandomRecipeFragment : Fragment() {
             currentRegionFilter = filters.region
             currentIngredientsFilter = filters.ingredients
             currentOtherConsiderationsFilter = filters.otherConsiderations
+        }
+
+        viewModel.imageResult.observe(viewLifecycleOwner) { imageResult ->
+
+            if (imageResult.isLoading) {
+
+                binding.imageViewRecipe.visibility = View.INVISIBLE
+                binding.divider2.visibility = View.VISIBLE
+                binding.progressBarLoading.visibility = View.VISIBLE
+            }else {
+
+                binding.progressBarLoading.visibility = View.INVISIBLE
+                binding.imageViewRecipe.visibility = View.VISIBLE
+                binding.divider2.visibility = View.INVISIBLE
+
+                if (imageResult.image != null) {
+
+                    Glide.with(this)
+                        .load(imageResult.image)
+                        .placeholder(R.drawable.food_recipe_img) // Your placeholder
+                        .error(R.drawable.ic_broken_image) // Error placeholder
+                        .into(binding.imageViewRecipe)
+                } else {
+                    // Use a default placeholder if no image URL
+                    binding.imageViewRecipe.setImageResource(R.drawable.food_recipe_img)
+                }
+            }
         }
     }
 
@@ -138,6 +141,14 @@ class RandomRecipeFragment : Fragment() {
                 menuInflater.inflate(R.menu.random_recipe_menu, menu)
             }
 
+            override fun onPrepareMenu(menu: Menu) {
+                super.onPrepareMenu(menu)
+
+                val refreshItem = menu.findItem(R.id.fr_menu_refresh)
+                val saveItem = menu.findItem(R.id.fr_menu_save)
+
+            }
+
             override fun onMenuItemSelected(menuItem: MenuItem): Boolean {
                 return when (menuItem.itemId) {
                     R.id.fr_menu_filter -> {
@@ -149,9 +160,12 @@ class RandomRecipeFragment : Fragment() {
                     R.id.fr_menu_refresh -> {
 
                         viewModel.resetRecipeUiState()
-
-                        // todo: refresh recipes
                         viewModel.refreshRecipe()
+                        true
+                    }
+
+                    R.id.fr_menu_save -> {
+                        viewModel.saveRecipeToDb()
                         true
                     }
 
