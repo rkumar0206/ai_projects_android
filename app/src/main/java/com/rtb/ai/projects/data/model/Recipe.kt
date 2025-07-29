@@ -5,6 +5,7 @@ import androidx.room.Index
 import androidx.room.PrimaryKey
 import androidx.room.TypeConverters
 import com.rtb.ai.projects.data.local.db.converter.StringListConverter // Assuming you create this
+import java.io.Serializable
 
 @Entity(tableName = "recipes",
     indices = [Index(value = ["recipeName"], unique = true)])
@@ -33,6 +34,6 @@ data class Recipe(
     val otherConsiderationsFilter: String?, // Store the filter used, if applicable
 
     val generatedAt: Long = System.currentTimeMillis() // Timestamp of when it was saved
-)
+): Serializable
 
 

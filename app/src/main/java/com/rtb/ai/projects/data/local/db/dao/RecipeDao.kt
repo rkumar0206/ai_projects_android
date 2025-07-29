@@ -24,11 +24,14 @@ interface RecipeDao {
     @Delete
     suspend fun deleteRecipe(recipe: Recipe)
 
+    @Query("DELETE FROM recipes WHERE id = :id")
+    suspend fun deleteRecipeById(id: Int)
+
     @Query("DELETE FROM recipes")
     suspend fun deleteAllRecipes()
 
-    @Query("SELECT * FROM recipes WHERE id = :recipeId")
-    fun getRecipeById(recipeId: Int): Recipe?
+    @Query("SELECT * FROM recipes ORDER BY generatedAt DESC LIMIT 1")
+    fun getLastSavedRecipe(): Flow<Recipe?>
 
     @Query("SELECT * FROM recipes WHERE id = :recipeId")
     fun getRecipeByIdFlow(recipeId: Int): Flow<Recipe?> // Flow for observable read

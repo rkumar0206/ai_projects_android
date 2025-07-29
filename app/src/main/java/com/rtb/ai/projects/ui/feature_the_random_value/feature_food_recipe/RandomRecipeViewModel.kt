@@ -1,9 +1,9 @@
 package com.rtb.ai.projects.ui.feature_the_random_value.feature_food_recipe
 
 import android.app.Application
+import android.util.Log
 import androidx.lifecycle.AndroidViewModel
-import androidx.lifecycle.LiveData
-import androidx.lifecycle.MutableLiveData
+import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.viewModelScope
 import com.rtb.ai.projects.data.model.Recipe
 import com.rtb.ai.projects.data.remote.AiRecipeResponse
@@ -18,6 +18,7 @@ import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
+import java.io.Serializable
 import javax.inject.Inject
 
 // Data class to hold the full recipe details
@@ -32,20 +33,20 @@ data class RecipeUiState(
     val isLoading: Boolean = false,
     val errorMessage: String? = null,
     val imagePrompt: String? = null
-)
+) : Serializable
 
 // Data class for filter values
 data class RecipeFilters(
     val region: String? = null,
     val ingredients: String? = null, // Comma-separated
     val otherConsiderations: String? = null
-)
+) : Serializable
 
 data class ImageResult(
     val image: ByteArray? = null,
     val isLoading: Boolean = false,
     val errorMessage: String? = null
-) {
+) : Serializable {
     override fun equals(other: Any?): Boolean {
         if (this === other) return true
         if (javaClass != other?.javaClass) return false
@@ -71,29 +72,36 @@ data class ImageResult(
 class RandomRecipeViewModel @Inject constructor(
     private val geminiAiHelper: GeminiAiHelper,
     private val recipeRepository: RecipeRepository,
+    private val savedStateHandle: SavedStateHandle,
     application: Application
 ) : AndroidViewModel(application) {
 
-    // LiveData for the entire recipe UI state
-    private val _recipeUiState =
-        MutableLiveData(RecipeUiState(isLoading = false)) // Initial state can be loading
-    val recipeUiState: LiveData<RecipeUiState> = _recipeUiState
+    val recipeUiState: StateFlow<RecipeUiState> = savedStateHandle.getStateFlow(
+        RECIPE_UI_STATE_KEY,
+        resetRecipeUiState()
+    )
+    val currentFilters: StateFlow<RecipeFilters> =
+        savedStateHandle.getStateFlow(RECIPE_FILTERS_KEY, RecipeFilters())
+    val imageResult: StateFlow<ImageResult> = savedStateHandle.getStateFlow(
+        IMAGE_RESULT_KEY,
+        ImageResult(isLoading = true)
+    )
+    val isRecipeSavedToDb: StateFlow<Boolean> =
+        savedStateHandle.getStateFlow(IS_RECIPE_SAVED_TO_DB_KEY, false)
 
-    // LiveData for current filter values (to pre-fill the bottom sheet or re-apply)
-    private val _currentFilters = MutableLiveData<RecipeFilters>(RecipeFilters())
-    val currentFilters: LiveData<RecipeFilters> = _currentFilters
+    val currentRecipe : StateFlow<Recipe?> = savedStateHandle.getStateFlow(RECIPE, null)
 
-    private val _imageResult = MutableLiveData(ImageResult(isLoading = false))
-    val imageResult: LiveData<ImageResult> = _imageResult
+    private var isDeletingRecipe = false
+    private var isSavingRecipe = false
 
     init {
-        // Optionally, load an initial random recipe when the ViewModel is created
-        //fetchRandomRecipe()
+        Log.d(TAG, "init: init called")
+        showLastSavedRecipeOrFetchRecipeFromAI()
     }
 
-    fun resetRecipeUiState() {
+    fun resetRecipeUiState(): RecipeUiState {
 
-        _recipeUiState.value = RecipeUiState(
+        val recipeUiState = RecipeUiState(
             LOADING,
             LOADING,
             LOADING,
@@ -101,12 +109,41 @@ class RandomRecipeViewModel @Inject constructor(
             emptyList(),
             emptyList(),
             LOADING,
-            false,
+            true,
             null
         )
+
+        updateSavedStateHandleValueForRecipeUIState(recipeUiState)
+        return recipeUiState
+    }
+
+    fun updateSaveStateRecipeValue(recipe: Recipe) {
+        savedStateHandle[RECIPE] = recipe
     }
 
     // --------------------------- DB Methods --------------------------------------------------
+
+    private fun showLastSavedRecipeOrFetchRecipeFromAI() {
+
+        viewModelScope.launch {
+            recipeRepository.getLastSavedRecipe().collect { recipe ->
+
+                Log.d(TAG, "showLastSavedRecipeOrFetchRecipeFromAI: recipe: $recipe")
+
+                if (!isDeletingRecipe && !isSavingRecipe) {
+
+                    if (recipe != null) {
+                        updateUIDataByRecipe(recipe)
+                    } else {
+                        fetchRandomRecipe()
+                    }
+                }else {
+                    isDeletingRecipe = false
+                    isSavingRecipe = false
+                }
+            }
+        }
+    }
 
     val allRecipes: StateFlow<List<Recipe>> = recipeRepository.getAllRecipes()
         .stateIn(
@@ -115,78 +152,104 @@ class RandomRecipeViewModel @Inject constructor(
             initialValue = emptyList()
         )
 
-    fun saveRecipeToDb() {
+    suspend fun saveOrDeleteRecipeFromDbBasedOnBookmarkMenuPressed() {
 
-        val recipeUiStateValue = _recipeUiState.value
-        val imageResultValue = _imageResult.value
-        val filtersValue = _currentFilters.value
+        if (!isRecipeSavedToDb.value) {
+            val recipeUiStateValue = recipeUiState.value
+            val imageResultValue = imageResult.value
+            val filtersValue = currentFilters.value
 
-        if (recipeUiStateValue != null) {
+            if (recipeUiState.value.recipeName.isNotBlank() || recipeUiState.value.recipeName != LOADING) {
 
-            val recipe = Recipe(
-                recipeName = recipeUiStateValue.recipeName,
-                yield = recipeUiStateValue.yield,
-                prepTime = recipeUiStateValue.prepTime,
-                cookTime = recipeUiStateValue.cookTime,
-                ingredients = recipeUiStateValue.ingredients,
-                instructions = recipeUiStateValue.instructions,
-                imagePrompt = recipeUiStateValue.imagePrompt,
-                regionFilter = filtersValue?.region,
-                ingredientsFilter = filtersValue?.ingredients,
-                otherConsiderationsFilter = filtersValue?.otherConsiderations,
-                imageFilePath = null,
-                generatedAt = System.currentTimeMillis()
-            )
+                val recipe = Recipe(
+                    recipeName = recipeUiStateValue.recipeName,
+                    yield = recipeUiStateValue.yield,
+                    prepTime = recipeUiStateValue.prepTime,
+                    cookTime = recipeUiStateValue.cookTime,
+                    ingredients = recipeUiStateValue.ingredients,
+                    instructions = recipeUiStateValue.instructions,
+                    imagePrompt = recipeUiStateValue.imagePrompt,
+                    regionFilter = filtersValue.region,
+                    ingredientsFilter = filtersValue.ingredients,
+                    otherConsiderationsFilter = filtersValue.otherConsiderations,
+                    imageFilePath = null,
+                    generatedAt = System.currentTimeMillis()
+                )
 
-            insertRecipe(
-                recipe,
-                imageResultValue?.image ?: ByteArray(0)
-            )
+                insertRecipe(
+                    recipe,
+                    imageResultValue.image ?: ByteArray(0)
+                )
 
+                savedStateHandle[IS_RECIPE_SAVED_TO_DB_KEY] = true
+            }
+        }else {
+            if (currentRecipe.value != null) {
+                Log.d(
+                    TAG,
+                    "saveOrDeleteRecipeFromDbBasedOnBookmarkMenuPressed: delete current recipe"
+                )
+
+                isDeletingRecipe = true
+                recipeRepository.deleteRecipeAndFile(currentRecipe.value!!)
+                savedStateHandle[RECIPE] = null
+                savedStateHandle[IS_RECIPE_SAVED_TO_DB_KEY] = false
+
+                //showLastSavedRecipeOrFetchRecipeFromAI()
+            }
         }
     }
 
-    fun insertRecipe(recipe: Recipe, image: ByteArray) {
-        viewModelScope.launch {
-            val context = getApplication<Application>().applicationContext
+    private suspend fun insertRecipe(recipe: Recipe, image: ByteArray) {
+        val context = getApplication<Application>().applicationContext
 
-            val filePath = image.saveByteArrayToInternalFile(
-                context,
-                "recipe_images",
-                "${recipe.recipeName}.png"
-            )
+        val filePath = image.saveByteArrayToInternalFile(
+            context,
+            "recipe_images",
+            "${recipe.recipeName}.png"
+        )
 
-            recipe.imageFilePath = filePath
+        recipe.imageFilePath = filePath
 
-            recipeRepository.insertRecipe(recipe)
+        isSavingRecipe = true
+        recipeRepository.insertRecipe(recipe)
+        savedStateHandle[RECIPE] = recipe
+    }
+
+    suspend fun getAndShowSelectedRecipe(recipeId: Int) {
+
+        recipeRepository.getRecipeByIdFlow(recipeId).collect { recipe ->
+            if (recipe != null) {
+                updateUIDataByRecipe(recipe)
+            }
         }
     }
 
-    fun getAndShowSelectedRecipe(recipeId: Int) {
+    private fun updateUIDataByRecipe(recipe: Recipe) {
 
-        val recipe = recipeRepository.getRecipeById(recipeId)
+        Log.d(TAG, "updateUIDataByRecipe: ")
 
-        if (recipe != null) {
-
-            setRecipeUiState(recipe)
-        }
-    }
-
-    private fun setRecipeUiState(recipe: Recipe) {
-
-        _recipeUiState.value = RecipeUiState(
+        val recipeUiState = RecipeUiState(
             recipeName = recipe.recipeName,
             yield = recipe.yield ?: LOADING,
             prepTime = recipe.prepTime ?: LOADING,
             cookTime = recipe.cookTime ?: LOADING,
-            ingredientsAndInstruction = convertIngredientAndInstructionToMdString(recipe.ingredients ?: emptyList(), recipe.instructions ?: emptyList()),
+            ingredientsAndInstruction = convertIngredientAndInstructionToMdString(
+                recipe.ingredients ?: emptyList(), recipe.instructions ?: emptyList()
+            ),
             isLoading = false,
             errorMessage = null
         )
 
-        _imageResult.value = ImageResult(image = recipe.imageFilePath?.let { filePath ->
+        updateSavedStateHandleValueForRecipeUIState(recipeUiState)
+
+        val imageResult = ImageResult(image = recipe.imageFilePath?.let { filePath ->
             AppUtil.retrieveImageAsByteArray(filePath)
         }, false, null)
+
+        updateSavedStateHandleValueForImageUIState(imageResult)
+        savedStateHandle[IS_RECIPE_SAVED_TO_DB_KEY] = true
+        savedStateHandle[RECIPE] = recipe
     }
 
     // -----------------------------------------------------------------------------------------
@@ -195,14 +258,15 @@ class RandomRecipeViewModel @Inject constructor(
     // -------------------- Fetching Random recipe through AI ------------------------------------
     private fun fetchRandomRecipe() {
         viewModelScope.launch {
-            _recipeUiState.value = RecipeUiState(isLoading = true) // Set loading state
-            _imageResult.value = ImageResult(isLoading = true)
+            updateSavedStateHandleValueForRecipeUIState(resetRecipeUiState())
+            updateSavedStateHandleValueForImageUIState(ImageResult(isLoading = true))
+            savedStateHandle[IS_RECIPE_SAVED_TO_DB_KEY] = false
             try {
 
                 val prompt = constructPrompt(
-                    region = currentFilters.value?.region ?: "",
-                    ingredients = currentFilters.value?.ingredients ?: "",
-                    otherConsideration = currentFilters.value?.otherConsiderations ?: ""
+                    region = currentFilters.value.region ?: "",
+                    ingredients = currentFilters.value.ingredients ?: "",
+                    otherConsideration = currentFilters.value.otherConsiderations ?: ""
                 )
 
                 geminiAiHelper.getPromptTextResult(prompt)
@@ -238,17 +302,19 @@ class RandomRecipeViewModel @Inject constructor(
                     aiRecipeResponse.instructions
                 )
 
-            _recipeUiState.value = RecipeUiState(
-                recipeName = aiRecipeResponse.recipeTitle,
-                yield = aiRecipeResponse.yield,
-                prepTime = aiRecipeResponse.prepTime,
-                cookTime = aiRecipeResponse.cookTime,
-                ingredients = aiRecipeResponse.ingredients,
-                instructions = aiRecipeResponse.instructions,
-                ingredientsAndInstruction = instructionsAndIngredients,
-                isLoading = false,
-                errorMessage = null,
-                imagePrompt = aiRecipeResponse.imagePrompt
+            updateSavedStateHandleValueForRecipeUIState(
+                RecipeUiState(
+                    recipeName = aiRecipeResponse.recipeTitle,
+                    yield = aiRecipeResponse.yield,
+                    prepTime = aiRecipeResponse.prepTime,
+                    cookTime = aiRecipeResponse.cookTime,
+                    ingredients = aiRecipeResponse.ingredients,
+                    instructions = aiRecipeResponse.instructions,
+                    ingredientsAndInstruction = instructionsAndIngredients,
+                    isLoading = false,
+                    errorMessage = null,
+                    imagePrompt = aiRecipeResponse.imagePrompt
+                )
             )
 
             getRecipeImage(aiRecipeResponse.imagePrompt)
@@ -263,20 +329,28 @@ class RandomRecipeViewModel @Inject constructor(
         if (imagePrompt.isNotBlank()) {
 
             viewModelScope.launch {
-                _imageResult.value = ImageResult(isLoading = true)
+                updateSavedStateHandleValueForImageUIState(ImageResult(isLoading = true))
                 geminiAiHelper.generateImageByPrompt(imagePrompt)
                     .onSuccess { imageResult ->
 
                         if (imageResult != null && imageResult.isPresent) {
                             val image = imageResult.get()
-                            _imageResult.value = ImageResult(image = image, isLoading = false)
+                            updateSavedStateHandleValueForImageUIState(
+                                ImageResult(
+                                    image = image,
+                                    isLoading = false
+                                )
+                            )
                         } else {
-                            showError("Unable to get the recipe image. PLease try again!!")
-                            _imageResult.value = ImageResult(isLoading = false)
+                            showError("Unable to get the recipe image. Please try again!!")
+                            updateSavedStateHandleValueForImageUIState(ImageResult(isLoading = false))
                         }
+
+                        Log.d(TAG, "getRecipeImage: imageResult: $imageResult")
                     }
                     .onFailure { error ->
-                        _imageResult.value = ImageResult(errorMessage = error.message)
+                        Log.d(TAG, "getRecipeImage: Error: $error")
+                        updateSavedStateHandleValueForImageUIState(ImageResult(errorMessage = error.message))
                     }
             }
         }
@@ -315,19 +389,41 @@ class RandomRecipeViewModel @Inject constructor(
     }
 
     fun applyFilters(region: String?, ingredients: String?, otherConsiderations: String?) {
-        _currentFilters.value = RecipeFilters(region, ingredients, otherConsiderations)
+        updateSavedStateHandleValueForRecipeFilter(
+            RecipeFilters(
+                region,
+                ingredients,
+                otherConsiderations
+            )
+        )
         fetchRandomRecipe()
     }
 
-    fun refreshRecipe() {
+    private fun updateSavedStateHandleValueForImageUIState(imageResult: ImageResult) {
+
+        savedStateHandle[IMAGE_RESULT_KEY] = imageResult
+    }
+
+    private fun updateSavedStateHandleValueForRecipeUIState(recipeUiState: RecipeUiState) {
+
+        savedStateHandle[RECIPE_UI_STATE_KEY] = recipeUiState
+    }
+
+    private fun updateSavedStateHandleValueForRecipeFilter(recipeFilters: RecipeFilters) {
+        savedStateHandle[RECIPE_FILTERS_KEY] = recipeFilters
+    }
+
+    fun refreshRecipeClicked() {
         fetchRandomRecipe()
     }
 
     private fun showError(errorMessage: String) {
 
-        _recipeUiState.value = RecipeUiState(
-            isLoading = false,
-            errorMessage = errorMessage
+        updateSavedStateHandleValueForRecipeUIState(
+            RecipeUiState(
+                isLoading = false,
+                errorMessage = errorMessage
+            )
         )
     }
 
@@ -380,4 +476,16 @@ class RandomRecipeViewModel @Inject constructor(
     }
 
     // --------------------------------------------------------------------------------------------
+
+
+    companion object {
+
+        const val RECIPE_UI_STATE_KEY = "recipeUiState"
+        const val RECIPE_FILTERS_KEY = "recipeFilters"
+        const val IMAGE_RESULT_KEY = "imageResult" // Unlikely to work directly due to ByteArray
+        const val IS_RECIPE_SAVED_TO_DB_KEY = "isRecipeSavedToDb"
+        const val RECIPE = "recipeId"
+
+        const val TAG = "RandomRecipeViewModel"
+    }
 }

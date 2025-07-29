@@ -3,12 +3,11 @@ package com.rtb.ai.projects.data.local.db.converter
 import androidx.room.TypeConverter
 import com.google.gson.Gson
 import com.google.gson.reflect.TypeToken
-import com.rtb.ai.projects.util.AppUtil.convertToJsonString
 
 class StringListConverter {
     @TypeConverter
     fun fromStringList(value: List<String>?): String? {
-        return value?.let { convertToJsonString() }
+        return value?.let { Gson().toJson(it) }
     }
 
     @TypeConverter
