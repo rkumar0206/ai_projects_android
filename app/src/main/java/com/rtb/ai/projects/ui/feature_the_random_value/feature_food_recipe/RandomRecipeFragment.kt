@@ -200,7 +200,11 @@ class RandomRecipeFragment : Fragment() {
                 return when (menuItem.itemId) {
                     R.id.fr_menu_filter -> {
 
-                        showFilterBottomSheet()
+                        if (!isRecipeRefreshing) {
+                            showFilterBottomSheet()
+                        }else {
+                            Toast.makeText(requireContext(), "Recipe fetching in progress...", Toast.LENGTH_SHORT).show()
+                        }
                         true
                     }
 
