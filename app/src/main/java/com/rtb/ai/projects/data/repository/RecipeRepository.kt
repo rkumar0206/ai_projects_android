@@ -21,7 +21,7 @@ class RecipeRepository @Inject constructor(
 
     fun getLastSavedRecipe() = recipeDao.getLastSavedRecipe()
 
-    fun getRecipeByIdFlow(id: Int) = recipeDao.getRecipeByIdFlow(id)
+    fun getRecipeByIdFlow(id: Long) = recipeDao.getRecipeByIdFlow(id)
 
     fun getRecipeByRecipeName(recipeName: String) = recipeDao.getRecipeByRecipeNameFlow(recipeName)
 

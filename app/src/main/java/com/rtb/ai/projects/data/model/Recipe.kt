@@ -11,7 +11,7 @@ import java.io.Serializable
     indices = [Index(value = ["recipeName"], unique = true)])
 data class Recipe(
     @PrimaryKey(autoGenerate = true)
-    val id: Int = 0, // Auto-generated primary key
+    val id: Long = 0, // Auto-generated primary key
 
     val recipeName: String,
     var imageFilePath: String?, // e.g., "/data/user/0/com.rtb.ai.projects/files/images/recipe_123.jpg"

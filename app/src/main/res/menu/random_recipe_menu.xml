@@ -18,4 +18,9 @@
         android:title="@string/apply_filters"
         app:showAsAction="always" />
 
+    <item
+        android:id="@+id/fr_menu_show_list"
+        android:icon="@drawable/ic_show_list"
+        android:title="@string/show_saved_recipe"
+        app:showAsAction="always" />
 </menu>

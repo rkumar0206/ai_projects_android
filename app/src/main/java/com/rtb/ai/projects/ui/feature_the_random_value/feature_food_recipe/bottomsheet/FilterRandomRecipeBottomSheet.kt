@@ -1,4 +1,4 @@
-package com.rtb.ai.projects.ui.feature_the_random_value.feature_food_recipe
+package com.rtb.ai.projects.ui.feature_the_random_value.feature_food_recipe.bottomsheet
 
 import android.os.Bundle
 import android.view.LayoutInflater

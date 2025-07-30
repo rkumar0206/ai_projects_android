@@ -20,6 +20,8 @@ import androidx.lifecycle.repeatOnLifecycle
 import com.bumptech.glide.Glide
 import com.rtb.ai.projects.R
 import com.rtb.ai.projects.databinding.FragmentRandomRecipeBinding
+import com.rtb.ai.projects.ui.feature_the_random_value.feature_food_recipe.bottomsheet.FilterRandomRecipeBottomSheet
+import com.rtb.ai.projects.ui.feature_the_random_value.feature_food_recipe.bottomsheet.SavedRecipesBottomSheet
 import com.rtb.ai.projects.util.AppUtil.displayMarkdownWithMarkwon
 import dagger.hilt.android.AndroidEntryPoint
 import kotlinx.coroutines.launch
@@ -59,6 +61,18 @@ class RandomRecipeFragment : Fragment() {
                     currentIngredientsFilter,
                     currentOtherConsiderationsFilter
                 )
+            }
+        }
+
+        // Listen for results from the SavedRecipesBottomSheet
+        setFragmentResultListener(SavedRecipesBottomSheet.REQUEST_KEY_RECIPE_CLICKED) { requestKey, bundle ->
+            if (requestKey == SavedRecipesBottomSheet.REQUEST_KEY_RECIPE_CLICKED) {
+                val recipeId = bundle.getLong(SavedRecipesBottomSheet.BUNDLE_KEY_RECIPE_ID, -1L)
+                if (recipeId != -1L) {
+                    Log.d(TAG, "Recipe ID received from bottom sheet: $recipeId")
+                    // Call ViewModel to load this recipe
+                    viewModel.getAndShowSelectedRecipe(recipeId)
+                }
             }
         }
     }
@@ -121,6 +135,10 @@ class RandomRecipeFragment : Fragment() {
     }
 
     private fun updateImageUi(imageResult: ImageResult) {
+
+        isRecipeRefreshing = imageResult.isLoading
+        requireActivity().invalidateMenu()
+
         if (imageResult.isLoading) {
 
             binding.imageViewRecipe.visibility = View.INVISIBLE
@@ -147,9 +165,6 @@ class RandomRecipeFragment : Fragment() {
     }
 
     private fun updateRecipeUI(recipeUiState: RecipeUiState) {
-
-        isRecipeRefreshing = recipeUiState.isLoading
-        requireActivity().invalidateMenu()
 
         if (recipeUiState.errorMessage != null) {
             Toast.makeText(requireContext(), recipeUiState.errorMessage, Toast.LENGTH_LONG)
@@ -184,7 +199,6 @@ class RandomRecipeFragment : Fragment() {
             override fun onPrepareMenu(menu: Menu) {
                 super.onPrepareMenu(menu)
 
-                val refreshItem = menu.findItem(R.id.fr_menu_refresh)
                 val saveItem = menu.findItem(R.id.fr_menu_save)
 
                 saveItem.isVisible = !isRecipeRefreshing
@@ -202,8 +216,12 @@ class RandomRecipeFragment : Fragment() {
 
                         if (!isRecipeRefreshing) {
                             showFilterBottomSheet()
-                        }else {
-                            Toast.makeText(requireContext(), "Recipe fetching in progress...", Toast.LENGTH_SHORT).show()
+                        } else {
+                            Toast.makeText(
+                                requireContext(),
+                                "Recipe fetching in progress...",
+                                Toast.LENGTH_SHORT
+                            ).show()
                         }
                         true
                     }
@@ -212,16 +230,30 @@ class RandomRecipeFragment : Fragment() {
 
                         if (!isRecipeRefreshing) {
                             viewModel.refreshRecipeClicked()
-                        }else {
-                            Toast.makeText(requireContext(), "Recipe fetching in progress...", Toast.LENGTH_SHORT).show()
+                        } else {
+                            Toast.makeText(
+                                requireContext(),
+                                "Recipe fetching in progress...",
+                                Toast.LENGTH_SHORT
+                            ).show()
                         }
                         true
                     }
 
                     R.id.fr_menu_save -> {
+                        viewModel.saveOrDeleteRecipeFromDbBasedOnBookmarkMenuPressed()
+                        true
+                    }
 
-                        lifecycleScope.launch {
-                            viewModel.saveOrDeleteRecipeFromDbBasedOnBookmarkMenuPressed()
+                    R.id.fr_menu_show_list -> {
+                        if (!isRecipeRefreshing) {
+                            showSavedRecipesBottomSheet()
+                        } else {
+                            Toast.makeText(
+                                requireContext(),
+                                "Recipe fetching in progress...",
+                                Toast.LENGTH_SHORT
+                            ).show()
                         }
                         true
                     }
@@ -240,6 +272,11 @@ class RandomRecipeFragment : Fragment() {
             currentOtherConsiderationsFilter
         )
         filterBottomSheet.show(parentFragmentManager, FilterRandomRecipeBottomSheet.TAG)
+    }
+
+    private fun showSavedRecipesBottomSheet() {
+        val savedRecipesSheet = SavedRecipesBottomSheet.newInstance()
+        savedRecipesSheet.show(parentFragmentManager, SavedRecipesBottomSheet.TAG)
     }
 
     override fun onDestroyView() {

@@ -68,4 +68,10 @@
     <string name="loading">Loading...</string>
     <string name="save">Save</string>
     <string name="error">Error</string>
+    <!-- TODO: Remove or change this placeholder text -->
+    <string name="hello_blank_fragment">Hello blank fragment</string>
+    <string name="saved_recipes">Saved Recipes</string>
+    <string name="no_recipes_saved_yet">No recipes saved yet!</string>
+    <string name="delete_recipe">Delete recipe button</string>
+    <string name="show_saved_recipe">Saved Recipes</string>
 </resources>

@@ -16,6 +16,7 @@ import com.rtb.ai.projects.util.constant.Constants.LOADING
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
 import java.io.Serializable
@@ -89,11 +90,6 @@ class RandomRecipeViewModel @Inject constructor(
     val isRecipeSavedToDb: StateFlow<Boolean> =
         savedStateHandle.getStateFlow(IS_RECIPE_SAVED_TO_DB_KEY, false)
 
-    val currentRecipe : StateFlow<Recipe?> = savedStateHandle.getStateFlow(RECIPE, null)
-
-    private var isDeletingRecipe = false
-    private var isSavingRecipe = false
-
     init {
         Log.d(TAG, "init: init called")
         showLastSavedRecipeOrFetchRecipeFromAI()
@@ -117,30 +113,18 @@ class RandomRecipeViewModel @Inject constructor(
         return recipeUiState
     }
 
-    fun updateSaveStateRecipeValue(recipe: Recipe) {
-        savedStateHandle[RECIPE] = recipe
-    }
-
     // --------------------------- DB Methods --------------------------------------------------
 
     private fun showLastSavedRecipeOrFetchRecipeFromAI() {
 
         viewModelScope.launch {
-            recipeRepository.getLastSavedRecipe().collect { recipe ->
 
-                Log.d(TAG, "showLastSavedRecipeOrFetchRecipeFromAI: recipe: $recipe")
+            val lastSavedRecipe = recipeRepository.getLastSavedRecipe().first()
 
-                if (!isDeletingRecipe && !isSavingRecipe) {
-
-                    if (recipe != null) {
-                        updateUIDataByRecipe(recipe)
-                    } else {
-                        fetchRandomRecipe()
-                    }
-                }else {
-                    isDeletingRecipe = false
-                    isSavingRecipe = false
-                }
+            if (lastSavedRecipe != null) {
+                updateUIDataByRecipe(lastSavedRecipe)
+            } else {
+                fetchRandomRecipe()
             }
         }
     }
@@ -152,50 +136,68 @@ class RandomRecipeViewModel @Inject constructor(
             initialValue = emptyList()
         )
 
-    suspend fun saveOrDeleteRecipeFromDbBasedOnBookmarkMenuPressed() {
+    fun saveOrDeleteRecipeFromDbBasedOnBookmarkMenuPressed() {
 
-        if (!isRecipeSavedToDb.value) {
-            val recipeUiStateValue = recipeUiState.value
-            val imageResultValue = imageResult.value
-            val filtersValue = currentFilters.value
+        viewModelScope.launch {
 
-            if (recipeUiState.value.recipeName.isNotBlank() || recipeUiState.value.recipeName != LOADING) {
+            Log.d(TAG, "saveOrDeleteRecipeFromDbBasedOnBookmarkMenuPressed: ")
 
-                val recipe = Recipe(
-                    recipeName = recipeUiStateValue.recipeName,
-                    yield = recipeUiStateValue.yield,
-                    prepTime = recipeUiStateValue.prepTime,
-                    cookTime = recipeUiStateValue.cookTime,
-                    ingredients = recipeUiStateValue.ingredients,
-                    instructions = recipeUiStateValue.instructions,
-                    imagePrompt = recipeUiStateValue.imagePrompt,
-                    regionFilter = filtersValue.region,
-                    ingredientsFilter = filtersValue.ingredients,
-                    otherConsiderationsFilter = filtersValue.otherConsiderations,
-                    imageFilePath = null,
-                    generatedAt = System.currentTimeMillis()
-                )
+            if (!isRecipeSavedToDb.value) {
 
-                insertRecipe(
-                    recipe,
-                    imageResultValue.image ?: ByteArray(0)
-                )
+                Log.d(TAG, "saveOrDeleteRecipeFromDbBasedOnBookmarkMenuPressed: Saving recipe")
 
-                savedStateHandle[IS_RECIPE_SAVED_TO_DB_KEY] = true
+                val recipeUiStateValue = recipeUiState.value
+                val imageResultValue = imageResult.value
+                val filtersValue = currentFilters.value
+
+                if (recipeUiState.value.recipeName.isNotBlank() && recipeUiState.value.recipeName != LOADING) {
+
+                    val recipe = Recipe(
+                        recipeName = recipeUiStateValue.recipeName,
+                        yield = recipeUiStateValue.yield,
+                        prepTime = recipeUiStateValue.prepTime,
+                        cookTime = recipeUiStateValue.cookTime,
+                        ingredients = recipeUiStateValue.ingredients,
+                        instructions = recipeUiStateValue.instructions,
+                        imagePrompt = recipeUiStateValue.imagePrompt,
+                        regionFilter = filtersValue.region,
+                        ingredientsFilter = filtersValue.ingredients,
+                        otherConsiderationsFilter = filtersValue.otherConsiderations,
+                        imageFilePath = null,
+                        generatedAt = System.currentTimeMillis()
+                    )
+
+                    insertRecipe(
+                        recipe,
+                        imageResultValue.image ?: ByteArray(0)
+                    )
+                }
+            } else {
+
+                val recipeToDelete =
+                    recipeRepository.getRecipeByRecipeName(recipeUiState.value.recipeName).first()
+
+                if (recipeToDelete != null) {
+
+                    recipeRepository.deleteRecipeAndFile(recipeToDelete)
+                    savedStateHandle[IS_RECIPE_SAVED_TO_DB_KEY] = false
+                }
             }
-        }else {
-            if (currentRecipe.value != null) {
-                Log.d(
-                    TAG,
-                    "saveOrDeleteRecipeFromDbBasedOnBookmarkMenuPressed: delete current recipe"
-                )
+        }
 
-                isDeletingRecipe = true
-                recipeRepository.deleteRecipeAndFile(currentRecipe.value!!)
-                savedStateHandle[RECIPE] = null
+    }
+
+    fun deleteRecipe(recipe: Recipe) {
+
+        viewModelScope.launch {
+
+            val argRecipeId = recipe.id
+            val currRecipeShowing = recipeRepository.getRecipeByRecipeName(recipeUiState.value.recipeName).first()
+
+            recipeRepository.deleteRecipeAndFile(recipe)
+
+            if (currRecipeShowing != null && currRecipeShowing.id == argRecipeId) {
                 savedStateHandle[IS_RECIPE_SAVED_TO_DB_KEY] = false
-
-                //showLastSavedRecipeOrFetchRecipeFromAI()
             }
         }
     }
@@ -211,14 +213,15 @@ class RandomRecipeViewModel @Inject constructor(
 
         recipe.imageFilePath = filePath
 
-        isSavingRecipe = true
-        recipeRepository.insertRecipe(recipe)
-        savedStateHandle[RECIPE] = recipe
+        val recipeId = recipeRepository.insertRecipe(recipe)
+        Log.d(TAG, "insertRecipe: Saved recipe: $recipe")
+        Log.d(TAG, "insertRecipe: Saved recipe id: $recipeId")
+        savedStateHandle[IS_RECIPE_SAVED_TO_DB_KEY] = true
     }
 
-    suspend fun getAndShowSelectedRecipe(recipeId: Int) {
-
-        recipeRepository.getRecipeByIdFlow(recipeId).collect { recipe ->
+    fun getAndShowSelectedRecipe(recipeId: Long) {
+        viewModelScope.launch {
+            val recipe = recipeRepository.getRecipeByIdFlow(recipeId).first()
             if (recipe != null) {
                 updateUIDataByRecipe(recipe)
             }
@@ -248,8 +251,8 @@ class RandomRecipeViewModel @Inject constructor(
         }, false, null)
 
         updateSavedStateHandleValueForImageUIState(imageResult)
+
         savedStateHandle[IS_RECIPE_SAVED_TO_DB_KEY] = true
-        savedStateHandle[RECIPE] = recipe
     }
 
     // -----------------------------------------------------------------------------------------
@@ -484,8 +487,6 @@ class RandomRecipeViewModel @Inject constructor(
         const val RECIPE_FILTERS_KEY = "recipeFilters"
         const val IMAGE_RESULT_KEY = "imageResult" // Unlikely to work directly due to ByteArray
         const val IS_RECIPE_SAVED_TO_DB_KEY = "isRecipeSavedToDb"
-        const val RECIPE = "recipeId"
-
         const val TAG = "RandomRecipeViewModel"
     }
 }
