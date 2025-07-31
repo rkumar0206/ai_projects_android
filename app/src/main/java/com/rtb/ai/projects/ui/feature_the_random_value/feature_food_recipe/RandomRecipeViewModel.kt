@@ -232,13 +232,20 @@ class RandomRecipeViewModel @Inject constructor(
 
         Log.d(TAG, "updateUIDataByRecipe: ")
 
+        if (recipe.ingredients == null || recipe.instructions == null) {
+            fetchRandomRecipe()
+        }
+
         val recipeUiState = RecipeUiState(
             recipeName = recipe.recipeName,
             yield = recipe.yield ?: LOADING,
             prepTime = recipe.prepTime ?: LOADING,
             cookTime = recipe.cookTime ?: LOADING,
+            ingredients = recipe.ingredients!!,
+            instructions = recipe.instructions!!,
+            imagePrompt = recipe.imagePrompt,
             ingredientsAndInstruction = convertIngredientAndInstructionToMdString(
-                recipe.ingredients ?: emptyList(), recipe.instructions ?: emptyList()
+                recipe.ingredients, recipe.instructions
             ),
             isLoading = false,
             errorMessage = null

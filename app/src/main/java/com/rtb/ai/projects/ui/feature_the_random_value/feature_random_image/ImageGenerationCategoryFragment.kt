@@ -1,4 +1,4 @@
-package com.rtb.ai.projects.ui.feature_the_random_value
+package com.rtb.ai.projects.ui.feature_the_random_value.feature_random_image
 
 import android.os.Bundle
 import android.view.LayoutInflater
@@ -12,10 +12,7 @@ import com.rtb.ai.projects.data.model.AIProjectCategory
 import com.rtb.ai.projects.databinding.FragmentTrvCategoryBinding
 import com.rtb.ai.projects.ui.adapters.AIProjectsCategoriesAdapter
 
-/**
- * A simple [Fragment] subclass as the default destination in the navigation.
- */
-class TrvCategoryFragment : Fragment() {
+class ImageGenerationCategoryFragment : Fragment() {
 
     private var _binding: FragmentTrvCategoryBinding? = null
     private lateinit var projectCategoryAdapter: AIProjectsCategoriesAdapter
@@ -61,13 +58,8 @@ class TrvCategoryFragment : Fragment() {
             0 -> {
                 // Navigate to RandomRecipeFragment
                 // Use the action ID defined in your navigation graph
-                findNavController().navigate(R.id.action_TrvCategoryFragment_to_randomRecipeFragment)
+                findNavController().navigate(R.id.action_imageGenerationCategoryFragment_to_randomImageGeneratorFragment)
             }
-
-            1 -> {
-                findNavController().navigate(R.id.action_TrvCategoryFragment_to_imageGenerationCategoryFragment)
-            }
-
         }
 
     }
@@ -75,11 +67,14 @@ class TrvCategoryFragment : Fragment() {
     private fun getCategories(): List<AIProjectCategory> {
 
         return listOf(
-            AIProjectCategory(0, R.drawable.food_recipe_img, getString(R.string.food_recipe)),
-            AIProjectCategory(1, R.drawable.images_img, getString(R.string.images)),
-            AIProjectCategory(2, R.drawable.colors_img, getString(R.string.colors)),
-            AIProjectCategory(3, R.drawable.github_img, getString(R.string.github)),
-            AIProjectCategory(4, R.drawable.stories_img, getString(R.string.stories)),
+            AIProjectCategory(
+                0,
+                R.drawable.generate_random_image,
+                getString(R.string.generate_random_image)
+            ),
+            AIProjectCategory(
+                1, R.drawable.image_by_color, getString(R.string.generate_image_by_colors)
+            )
         )
     }
 

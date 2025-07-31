@@ -68,10 +68,15 @@
     <string name="loading">Loading...</string>
     <string name="save">Save</string>
     <string name="error">Error</string>
-    <!-- TODO: Remove or change this placeholder text -->
     <string name="hello_blank_fragment">Hello blank fragment</string>
     <string name="saved_recipes">Saved Recipes</string>
     <string name="no_recipes_saved_yet">No recipes saved yet!</string>
     <string name="delete_recipe">Delete recipe button</string>
     <string name="show_saved_recipe">Saved Recipes</string>
+    <string name="generate_random_image">Generate random image</string>
+    <string name="generate_image_by_colors">Generate image by color</string>
+    <string name="copy_prompt_to_clipboard">Copy prompt to clipboard</string>
+    <string name="generated_image_description">Generated image</string>
+    <string name="image_keywords_title">Add Image Keywords</string>
+    <string name="comma_separated_keywords_hint">Comma separated keywords (e.g., nature, sunset, vibrant)</string>
 </resources>

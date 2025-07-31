@@ -1,0 +1,87 @@
+<?xml version="1.0" encoding="utf-8"?>
+<androidx.constraintlayout.widget.ConstraintLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:id="@+id/rootLayoutRandomImage"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:animateLayoutChanges="true"
+    tools:context=".ui.feature_the_random_value.feature_random_image.RandomImageGeneratorFragment">
+
+    <com.github.chrisbanes.photoview.PhotoView
+        android:id="@+id/imageViewGenerated"
+        android:layout_width="0dp"
+        android:layout_height="0dp"
+        android:layout_marginBottom="16dp"
+        android:contentDescription="@string/generated_image_description"
+        android:scaleType="centerInside"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toTopOf="parent"
+        tools:src="@drawable/generate_random_image" />
+
+    <!-- Group for text and copy icon, to animate visibility together -->
+    <androidx.constraintlayout.widget.Group
+        android:id="@+id/groupTextElements"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:visibility="gone"
+        app:constraint_referenced_ids="scrollViewPromptText,imageViewCopyPrompt"
+        tools:visibility="visible" />
+
+
+    <androidx.core.widget.NestedScrollView
+        android:id="@+id/scrollViewPromptText"
+        android:layout_width="0dp"
+        android:layout_height="150dp"
+        android:layout_marginStart="16dp"
+        android:layout_marginEnd="8dp"
+        android:layout_marginBottom="16dp"
+        android:background="#80000000"
+        android:padding="8dp"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintEnd_toStartOf="@+id/imageViewCopyPrompt"
+        app:layout_constraintStart_toStartOf="parent">
+
+        <TextView
+            android:id="@+id/textViewImagePrompt"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:textColor="@android:color/white"
+            android:textSize="14sp"
+            tools:text="A beautiful landscape with mountains and a lake during sunset, digital art, high detail, vibrant colors. This is a very long prompt to test the scrolling capability of the TextView and ensure that it wraps correctly and allows the user to see all of the content by scrolling down. nnkjakjbjkabj ajakjbjabjabjabjabjkabjabjabnannjajajkajknkankjnajknakjnakj ankjnkankjnakjn akjnakjnaankjnananannanaknkjankjankjnaknakjnakjnakjnakjnkajnkajnakjnakjnakjnajknajknakjanknakjnakna" />
+    </androidx.core.widget.NestedScrollView>
+
+    <ImageButton
+        android:id="@+id/imageViewCopyPrompt"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginEnd="16dp"
+        android:background="?attr/selectableItemBackgroundBorderless"
+        android:clickable="true"
+        android:contentDescription="@string/copy_prompt_to_clipboard"
+        android:focusable="true"
+        android:padding="12dp"
+        android:src="@drawable/ic_copy"
+        app:layout_constraintBottom_toBottomOf="@+id/scrollViewPromptText"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintTop_toTopOf="@+id/scrollViewPromptText"
+        app:tint="@android:color/white" />
+
+    <!-- Loading Spinner (ProgressBar) -->
+    <com.google.android.material.progressindicator.CircularProgressIndicator
+        android:id="@+id/progressBarLoading"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:indeterminate="true"
+        android:visibility="gone"
+        app:indicatorSize="24dp"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintHorizontal_bias="0.5"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toTopOf="parent"
+        app:layout_constraintVertical_bias="0.5"
+        tools:visibility="visible" />
+</androidx.constraintlayout.widget.ConstraintLayout>

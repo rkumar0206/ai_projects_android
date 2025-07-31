@@ -193,7 +193,7 @@ class RandomRecipeFragment : Fragment() {
                 menuInflater: MenuInflater
             ) {
 
-                menuInflater.inflate(R.menu.random_recipe_menu, menu)
+                menuInflater.inflate(R.menu.random_generator_shared_menu, menu)
             }
 
             override fun onPrepareMenu(menu: Menu) {
