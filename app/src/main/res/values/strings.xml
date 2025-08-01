@@ -79,4 +79,5 @@
     <string name="generated_image_description">Generated image</string>
     <string name="image_keywords_title">Add Image Keywords</string>
     <string name="comma_separated_keywords_hint">Comma separated keywords (e.g., nature, sunset, vibrant)</string>
+    <string name="download">Download</string>
 </resources>

@@ -199,6 +199,8 @@ class RandomRecipeFragment : Fragment() {
             override fun onPrepareMenu(menu: Menu) {
                 super.onPrepareMenu(menu)
 
+                menu.findItem(R.id.fr_menu_download).isVisible = false
+
                 val saveItem = menu.findItem(R.id.fr_menu_save)
 
                 saveItem.isVisible = !isRecipeRefreshing

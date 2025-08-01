@@ -23,4 +23,11 @@
         android:icon="@drawable/ic_show_list"
         android:title="@string/show_saved_recipe"
         app:showAsAction="always" />
+
+    <item
+        android:id="@+id/fr_menu_download"
+        android:icon="@drawable/ic_download"
+        android:title="@string/download"
+        app:showAsAction="always" />
+
 </menu>

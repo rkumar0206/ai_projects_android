@@ -21,6 +21,7 @@ import com.bumptech.glide.Glide
 import com.rtb.ai.projects.R
 import com.rtb.ai.projects.databinding.FragmentRandomImageGeneratorBinding
 import com.rtb.ai.projects.ui.feature_the_random_value.feature_random_image.bottomsheet.ImageKeywordsBottomSheet
+import com.rtb.ai.projects.ui.feature_the_random_value.feature_random_image.bottomsheet.SavedImagesBottomSheet
 import com.rtb.ai.projects.util.AppUtil.copyToClipboard
 import dagger.hilt.android.AndroidEntryPoint
 import kotlinx.coroutines.launch
@@ -33,6 +34,7 @@ class RandomImageGeneratorFragment : Fragment() {
     private var currentKeywords: String = ""
     private val viewModel: RandomImageGenerationViewModel by viewModels()
     private var isLoading = false
+    private var isImageAlreadySaved = false
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -44,6 +46,15 @@ class RandomImageGeneratorFragment : Fragment() {
                     bundle.getString(ImageKeywordsBottomSheet.BUNDLE_KEY_KEYWORDS_STRING, "")
                 currentKeywords = receivedKeywords
                 viewModel.generateImagePromptAndImage(currentKeywords)
+            }
+        }
+
+        setFragmentResultListener(SavedImagesBottomSheet.REQUEST_KEY_IMAGE_CLICKED) { requestKey, bundle ->
+            if (requestKey == SavedImagesBottomSheet.REQUEST_KEY_IMAGE_CLICKED) {
+                val imageId = bundle.getLong(SavedImagesBottomSheet.BUNDLE_KEY_IMAGE_ID, -1L)
+                if (imageId != -1L) {
+                    viewModel.getAndShowSelectedImage(imageId)
+                }
             }
         }
     }
@@ -88,6 +99,13 @@ class RandomImageGeneratorFragment : Fragment() {
                 launch {
                     viewModel.keywordsFilter.collect { currentKeywords = it }
                 }
+
+                launch {
+                    viewModel.isAIImageSavedToDb.collect {
+                        isImageAlreadySaved = it
+                        requireActivity().invalidateMenu()
+                    }
+                }
             }
         }
     }
@@ -96,6 +114,13 @@ class RandomImageGeneratorFragment : Fragment() {
 
         binding.progressBarLoading.isVisible = uiState.isLoading
         isLoading = uiState.isLoading
+        requireActivity().invalidateMenu()
+
+        if (uiState.isLoading) {
+            binding.imageViewGenerated.setImageResource(R.drawable.generate_random_image)
+            binding.textViewImagePrompt.text = ""
+            binding.groupTextElements.visibility = View.GONE
+        }
 
         if (uiState.image != null) {
 
@@ -139,22 +164,21 @@ class RandomImageGeneratorFragment : Fragment() {
                 menu: Menu,
                 menuInflater: MenuInflater
             ) {
-
                 menuInflater.inflate(R.menu.random_generator_shared_menu, menu)
             }
 
             override fun onPrepareMenu(menu: Menu) {
                 super.onPrepareMenu(menu)
 
-//                val saveItem = menu.findItem(R.id.fr_menu_save)
-//
-//                saveItem.isVisible = !isRecipeRefreshing
-//
-//                if (isRecipeAlreadySaved) {
-//                    saveItem.setIcon(R.drawable.ic_bookmark_fill)
-//                } else {
-//                    saveItem.setIcon(R.drawable.ic_bookmark_no_fill)
-//                }
+                val saveItem = menu.findItem(R.id.fr_menu_save)
+
+                saveItem.isVisible = !isLoading
+
+                if (isImageAlreadySaved) {
+                    saveItem.setIcon(R.drawable.ic_bookmark_fill)
+                } else {
+                    saveItem.setIcon(R.drawable.ic_bookmark_no_fill)
+                }
             }
 
             override fun onMenuItemSelected(menuItem: MenuItem): Boolean {
@@ -164,11 +188,7 @@ class RandomImageGeneratorFragment : Fragment() {
                         if (!isLoading) {
                             showKeywordsBottomSheet()
                         } else {
-                            Toast.makeText(
-                                requireContext(),
-                                "Image generation in progress",
-                                Toast.LENGTH_SHORT
-                            ).show()
+                            showImageGenerationInProgressToast()
                         }
                         true
                     }
@@ -178,20 +198,42 @@ class RandomImageGeneratorFragment : Fragment() {
                         if (!isLoading) {
                             viewModel.generateImagePromptAndImage(currentKeywords)
                         } else {
-                            Toast.makeText(
-                                requireContext(),
-                                "Image generation in progress",
-                                Toast.LENGTH_SHORT
-                            ).show()
+                            showImageGenerationInProgressToast()
                         }
                         true
                     }
 
                     R.id.fr_menu_save -> {
+
+                        if (!isLoading) {
+
+                            viewModel.saveOrDeleteAIImageFromDbBasedOnBookmarkMenuPressed()
+                        } else {
+                            showImageGenerationInProgressToast()
+                        }
+
                         true
                     }
 
                     R.id.fr_menu_show_list -> {
+
+                        if (!isLoading) {
+                            showSavedImagesBottomSheet()
+                        } else {
+                            showImageGenerationInProgressToast()
+                        }
+
+                        true
+                    }
+
+                    R.id.fr_menu_download -> {
+
+                        if (!isLoading) {
+                            viewModel.downloadCurrentImage()
+                        }else{
+                            showImageGenerationInProgressToast()
+                        }
+
                         true
                     }
 
@@ -202,10 +244,24 @@ class RandomImageGeneratorFragment : Fragment() {
 
     }
 
+    private fun showImageGenerationInProgressToast() {
+
+        Toast.makeText(
+            requireContext(),
+            "Image generation in progress",
+            Toast.LENGTH_SHORT
+        ).show()
+    }
+
     private fun showKeywordsBottomSheet() {
         val keywordsSheet =
             ImageKeywordsBottomSheet.newInstance(currentKeywords) // Pass current keywords
         keywordsSheet.show(parentFragmentManager, ImageKeywordsBottomSheet.TAG)
+    }
+
+    private fun showSavedImagesBottomSheet() {
+        val savedImageSheet = SavedImagesBottomSheet.newInstance()
+        savedImageSheet.show(parentFragmentManager, SavedImagesBottomSheet.TAG)
     }
 
     override fun onDestroyView() {

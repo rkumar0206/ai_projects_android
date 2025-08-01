@@ -1,4 +1,4 @@
-package com.rtb.ai.projects.ui.feature_the_random_value.feature_food_recipe.bottomsheet // Adjust package
+package com.rtb.ai.projects.ui.feature_the_random_value.feature_random_image.bottomsheet // Adjust package
 
 import android.os.Bundle
 import android.util.Log
@@ -14,29 +14,26 @@ import androidx.lifecycle.repeatOnLifecycle
 import androidx.recyclerview.widget.LinearLayoutManager
 import com.google.android.material.bottomsheet.BottomSheetDialogFragment
 import com.rtb.ai.projects.databinding.BottomsheetSavedItemsBinding
-import com.rtb.ai.projects.ui.feature_the_random_value.feature_food_recipe.RandomRecipeViewModel
-import com.rtb.ai.projects.ui.feature_the_random_value.feature_food_recipe.adapter.SavedRecipesAdapter
+import com.rtb.ai.projects.ui.feature_the_random_value.feature_random_image.RandomImageGenerationViewModel
+import com.rtb.ai.projects.ui.feature_the_random_value.feature_random_image.adapter.SavedImagesAdapter
 import dagger.hilt.android.AndroidEntryPoint
 import kotlinx.coroutines.launch
 
 @AndroidEntryPoint
-class SavedRecipesBottomSheet : BottomSheetDialogFragment() {
+class SavedImagesBottomSheet : BottomSheetDialogFragment() {
 
     private var _binding: BottomsheetSavedItemsBinding? = null
     private val binding get() = _binding!!
-
-    // Use activityViewModels to share the ViewModel with RandomRecipeFragment
-    private val viewModel: RandomRecipeViewModel by activityViewModels()
-
-    private lateinit var savedRecipesAdapter: SavedRecipesAdapter
+    private val viewModel: RandomImageGenerationViewModel by activityViewModels()
+    private lateinit var savedImagesAdapter: SavedImagesAdapter
 
     companion object {
-        const val TAG = "SavedRecipesBottomSheet"
-        const val REQUEST_KEY_RECIPE_CLICKED = "requestRecipeClicked"
-        const val BUNDLE_KEY_RECIPE_ID = "bundleRecipeId"
+        const val TAG = "SavedImagesBottomSheet"
+        const val REQUEST_KEY_IMAGE_CLICKED = "requestImageClicked"
+        const val BUNDLE_KEY_IMAGE_ID = "bundleImageId"
 
-        fun newInstance(): SavedRecipesBottomSheet {
-            return SavedRecipesBottomSheet()
+        fun newInstance(): SavedImagesBottomSheet {
+            return SavedImagesBottomSheet()
         }
     }
 
@@ -54,28 +51,28 @@ class SavedRecipesBottomSheet : BottomSheetDialogFragment() {
         setupRecyclerView()
         observeViewModel()
 
-        // Fetch all recipes when the BottomSheet is created/shown
-        // viewModel.getAllRecipes() // Assuming you have this method in your ViewModel
+        // Fetch all Images when the BottomSheet is created/shown
+        // viewModel.getAllImages() // Assuming you have this method in your ViewModel
         // Or it's a Flow that you collect
     }
 
     private fun setupRecyclerView() {
-        savedRecipesAdapter = SavedRecipesAdapter(
-            onItemClick = { recipeId ->
-                // Pass the recipeId back to the RandomRecipeFragment
+        savedImagesAdapter = SavedImagesAdapter(
+            onItemClick = { imageId ->
+                // Pass the imageId back to the RandomImageFragment
                 setFragmentResult(
-                    REQUEST_KEY_RECIPE_CLICKED,
-                    bundleOf(BUNDLE_KEY_RECIPE_ID to recipeId)
+                    REQUEST_KEY_IMAGE_CLICKED,
+                    bundleOf(BUNDLE_KEY_IMAGE_ID to imageId)
                 )
                 dismiss() // Close the bottom sheet
             },
-            onDeleteClick = { recipe ->
+            onDeleteClick = { image ->
                 // Call ViewModel's delete method
-                viewModel.deleteRecipe(recipe)
+                viewModel.deleteAIImage(image)
             }
         )
         binding.recyclerViewSavedItems.apply {
-            adapter = savedRecipesAdapter
+            adapter = savedImagesAdapter
             layoutManager = LinearLayoutManager(requireContext())
         }
     }
@@ -83,17 +80,17 @@ class SavedRecipesBottomSheet : BottomSheetDialogFragment() {
     private fun observeViewModel() {
         viewLifecycleOwner.lifecycleScope.launch {
             viewLifecycleOwner.repeatOnLifecycle(Lifecycle.State.STARTED) {
-                // Observe the list of all recipes from the ViewModel
-                viewModel.allRecipes.collect { recipes -> // Assuming Flow named 'allSavedRecipes'
-                    Log.d(TAG, "Saved recipes received: ${recipes.size}")
-                    if (recipes.isEmpty()) {
+                // Observe the list of all Images from the ViewModel
+                viewModel.allImages.collect { images -> // Assuming Flow named 'allSavedImages'
+                    Log.d(TAG, "Saved images received: ${images.size}")
+                    if (images.isEmpty()) {
                         binding.recyclerViewSavedItems.visibility = View.GONE
                         binding.textViewEmptyState.visibility = View.VISIBLE
                     } else {
                         binding.recyclerViewSavedItems.visibility = View.VISIBLE
                         binding.textViewEmptyState.visibility = View.GONE
                     }
-                    savedRecipesAdapter.submitList(recipes)
+                    savedImagesAdapter.submitList(images)
                 }
             }
         }

@@ -8,7 +8,7 @@
     android:background="?attr/selectableItemBackground">
 
     <ImageView
-        android:id="@+id/imageViewRecipe"
+        android:id="@+id/imageViewItem"
         android:layout_width="60dp"
         android:layout_height="60dp"
         android:contentDescription="@string/recipe_image"
@@ -19,7 +19,7 @@
         tools:srcCompat="@tools:sample/avatars" />
 
     <TextView
-        android:id="@+id/textViewRecipeName"
+        android:id="@+id/textViewItemName"
         android:layout_width="0dp"
         android:layout_height="wrap_content"
         android:layout_marginStart="12dp"
@@ -29,9 +29,9 @@
         android:textAppearance="?attr/textAppearanceListItem"
         android:textSize="16sp"
         app:layout_constraintEnd_toStartOf="@+id/imageViewDelete"
-        app:layout_constraintStart_toEndOf="@+id/imageViewRecipe"
-        app:layout_constraintTop_toTopOf="@+id/imageViewRecipe"
-        app:layout_constraintBottom_toBottomOf="@+id/imageViewRecipe"
+        app:layout_constraintStart_toEndOf="@+id/imageViewItem"
+        app:layout_constraintTop_toTopOf="@+id/imageViewItem"
+        app:layout_constraintBottom_toBottomOf="@+id/imageViewItem"
         tools:text="Delicious Pasta Carbonara with Extra Cheese and Herbs" />
 
     <ImageView
@@ -44,8 +44,8 @@
         android:padding="8dp"
         android:src="@drawable/ic_delete"
         app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintTop_toTopOf="@+id/imageViewRecipe"
-        app:layout_constraintBottom_toBottomOf="@+id/imageViewRecipe"
+        app:layout_constraintTop_toTopOf="@+id/imageViewItem"
+        app:layout_constraintBottom_toBottomOf="@+id/imageViewItem"
         app:tint="?attr/colorControlNormal"
         android:contentDescription="@string/delete_recipe" />
 

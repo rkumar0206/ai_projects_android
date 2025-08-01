@@ -3,6 +3,7 @@ package com.rtb.ai.projects.di // Or your preferred package for DI modules
 import android.content.Context
 import androidx.room.Room
 import com.rtb.ai.projects.data.local.db.AppDatabase
+import com.rtb.ai.projects.data.local.db.dao.AIImageDao
 import com.rtb.ai.projects.data.local.db.dao.RecipeDao
 import dagger.Module
 import dagger.Provides
@@ -30,6 +31,11 @@ object DatabaseModule {
     @Singleton // Often DAOs are also singletons, tied to the single AppDatabase instance
     fun provideRecipeDao(appDatabase: AppDatabase): RecipeDao {
         return appDatabase.recipeDao()
+    }
+
+    @Provides
+    fun provideAIImageDao(appDatabase: AppDatabase): AIImageDao {
+        return appDatabase.aiImageDao()
     }
 }
 

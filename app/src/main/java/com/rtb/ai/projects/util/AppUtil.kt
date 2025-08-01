@@ -3,7 +3,12 @@ package com.rtb.ai.projects.util
 import android.app.Activity
 import android.content.ClipData
 import android.content.ClipboardManager
+import android.content.ContentResolver
+import android.content.ContentValues
 import android.content.Context
+import android.net.Uri
+import android.os.Environment
+import android.provider.MediaStore
 import android.util.Log
 import android.view.View
 import android.view.inputmethod.InputMethodManager
@@ -176,4 +181,31 @@ object AppUtil {
         }
     }
 
+    fun ByteArray.downloadImage(fileName: String, resolver: ContentResolver): Boolean {
+
+        try {
+            val contentValues = ContentValues().apply {
+                put(MediaStore.MediaColumns.DISPLAY_NAME, fileName)
+                put(MediaStore.MediaColumns.MIME_TYPE, "image/png")
+                put(MediaStore.MediaColumns.RELATIVE_PATH, Environment.DIRECTORY_DOWNLOADS)
+            }
+            val imageUri: Uri? =
+                resolver.insert(MediaStore.Downloads.EXTERNAL_CONTENT_URI, contentValues)
+
+            if (imageUri != null) {
+                resolver.openOutputStream(imageUri).use { outputStream ->
+                    if (outputStream == null) {
+                        throw Exception("Failed to get output stream for MediaStore URI.")
+                    }
+                    outputStream.write(this)
+                }
+            } else {
+                throw Exception("MediaStore.Downloads.EXTERNAL_CONTENT_URI returned null.")
+            }
+
+            return true
+        } catch (e: Exception) {
+            return false
+        }
+    }
 }

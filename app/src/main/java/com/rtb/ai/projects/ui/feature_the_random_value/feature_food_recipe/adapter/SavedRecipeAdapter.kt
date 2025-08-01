@@ -8,7 +8,7 @@ import androidx.recyclerview.widget.RecyclerView
 import com.bumptech.glide.Glide
 import com.rtb.ai.projects.R
 import com.rtb.ai.projects.data.model.Recipe
-import com.rtb.ai.projects.databinding.ItemSavedRecipeBinding
+import com.rtb.ai.projects.databinding.ItemSavedBinding
 import com.rtb.ai.projects.util.AppUtil
 
 class SavedRecipesAdapter(
@@ -18,7 +18,7 @@ class SavedRecipesAdapter(
 
     override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): RecipeViewHolder {
         val binding =
-            ItemSavedRecipeBinding.inflate(LayoutInflater.from(parent.context), parent, false)
+            ItemSavedBinding.inflate(LayoutInflater.from(parent.context), parent, false)
         return RecipeViewHolder(binding, onItemClick, onDeleteClick)
     }
 
@@ -27,7 +27,7 @@ class SavedRecipesAdapter(
     }
 
     class RecipeViewHolder(
-        private val binding: ItemSavedRecipeBinding,
+        private val binding: ItemSavedBinding,
         private val onItemClick: (Long) -> Unit,
         private val onDeleteClick: (Recipe) -> Unit
     ) : RecyclerView.ViewHolder(binding.root) {
@@ -49,7 +49,7 @@ class SavedRecipesAdapter(
 
         fun bind(recipe: Recipe) {
             currentRecipe = recipe
-            binding.textViewRecipeName.text = recipe.recipeName
+            binding.textViewItemName.text = recipe.recipeName
 
             // Load image using Glide (or your preferred image loading library)
             // Assuming your Recipe model has an imagePath or imageByteArray
@@ -58,14 +58,14 @@ class SavedRecipesAdapter(
 
             if (imageByteArray != null) {
 
-                Glide.with(binding.imageViewRecipe.context)
+                Glide.with(binding.imageViewItem.context)
                     .load(imageByteArray)
                     .placeholder(R.drawable.food_recipe_img) // Your placeholder
                     .error(R.drawable.ic_broken_image) // Error placeholder
-                    .into(binding.imageViewRecipe)
+                    .into(binding.imageViewItem)
             } else {
                 // Use a default placeholder if no image
-                binding.imageViewRecipe.setImageResource(R.drawable.food_recipe_img)
+                binding.imageViewItem.setImageResource(R.drawable.food_recipe_img)
             }
         }
     }
