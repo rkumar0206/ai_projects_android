@@ -42,6 +42,6 @@ interface AIImageDao {
     @Query("SELECT * FROM aiImages WHERE imageFilePath = :imagePath LIMIT 1")
     fun getImageByPath(imagePath: String): Flow<AIImage?>
 
-    @Query("SELECT * FROM aiImages ORDER BY generatedAt DESC LIMIT 1")
-    fun getLastSavedImage(): Flow<AIImage?>
+    @Query("SELECT * FROM aiImages WHERE tag = :tag ORDER BY generatedAt DESC LIMIT 1")
+    fun getLastSavedImage(tag: String): Flow<AIImage?>
 }

@@ -60,6 +60,10 @@ class ImageGenerationCategoryFragment : Fragment() {
                 // Use the action ID defined in your navigation graph
                 findNavController().navigate(R.id.action_imageGenerationCategoryFragment_to_randomImageGeneratorFragment)
             }
+
+            1 -> {
+                findNavController().navigate(R.id.action_imageGenerationCategoryFragment_to_randomImageByColorFragment)
+            }
         }
 
     }

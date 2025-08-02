@@ -1,21 +1,24 @@
 package com.rtb.ai.projects.ui.feature_the_random_value.feature_random_image
 
 import android.app.Application
+import android.util.Log
 import android.widget.Toast
 import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.viewModelScope
 import com.rtb.ai.projects.data.model.AIImage
 import com.rtb.ai.projects.data.repository.AIImageRepository
+import com.rtb.ai.projects.util.AppUtil
 import com.rtb.ai.projects.util.AppUtil.downloadImage
 import com.rtb.ai.projects.util.AppUtil.retrieveImageAsByteArray
 import com.rtb.ai.projects.util.AppUtil.saveByteArrayToInternalFile
 import com.rtb.ai.projects.util.GeminiAiHelper
 import com.rtb.ai.projects.util.constant.Constants
-import com.rtb.ai.projects.util.constant.Constants.IMAGE_GENERATION_RANDOM_IMAGE_USING_KEYWORD_TAG
 import com.rtb.ai.projects.util.constant.Constants.LOADING
+import com.rtb.ai.projects.util.constant.IMAGE_CATEGORY_TAG
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.first
@@ -67,12 +70,20 @@ class RandomImageGenerationViewModel @Inject constructor(
         const val UI_STATE_KEY = "randomImageGenerationUiState"
         const val KEYWORDS_FILTER_KEY =
             "randomImageKeywordsFilter" // If you want to save keywords separately
+        const val SELECTED_COLORS_KEY = "selectedColors"
         const val IS_IMAGE_SAVED_TO_DB_KEY = "isImageSavedToDb"
+        const val IMAGE_CATEGORY_TAG_KEY = "imageCategoryTag"
 
         // Or include it in UI_STATE_KEY as done in RandomImageGenerationUIState
         private const val TAG = "ImageGenViewModel"
     }
 
+    val imageGenerationTagStateFlow: StateFlow<IMAGE_CATEGORY_TAG> = savedStateHandle.getStateFlow(
+        IMAGE_CATEGORY_TAG_KEY,
+        IMAGE_CATEGORY_TAG.IMAGE_GENERATION_RANDOM_IMAGE_USING_KEYWORD_TAG
+    )
+    val selectedColorsStateFlow: StateFlow<List<Int>> =
+        savedStateHandle.getStateFlow(SELECTED_COLORS_KEY, emptyList())
     val uiState: StateFlow<RandomImageGenerationUIState> =
         savedStateHandle.getStateFlow(UI_STATE_KEY, RandomImageGenerationUIState(isLoading = true))
     val keywordsFilter: StateFlow<String> = savedStateHandle.getStateFlow(KEYWORDS_FILTER_KEY, "")
@@ -80,7 +91,17 @@ class RandomImageGenerationViewModel @Inject constructor(
         savedStateHandle.getStateFlow(IS_IMAGE_SAVED_TO_DB_KEY, false)
 
     init {
-        showLastSavedImageOrFetchRandomImageFromAI()
+
+        Log.d(TAG, "RandomImageGenerationViewModel: init")
+
+        viewModelScope.launch {
+            delay(1000)
+            showLastSavedImageOrFetchRandomImageFromAI()
+        }
+    }
+
+    fun setImageGenerationTag(tag: IMAGE_CATEGORY_TAG) {
+        savedStateHandle[IMAGE_CATEGORY_TAG_KEY] = tag
     }
 
     // ------------------------------- DB methods ---------------------------------
@@ -89,24 +110,43 @@ class RandomImageGenerationViewModel @Inject constructor(
 
         viewModelScope.launch {
 
-            val lastSavedImage = aiImageRepository.getLastSavedImage().first()
+            val lastSavedImage =
+                aiImageRepository.getLastSavedImage(imageGenerationTagStateFlow.value).first()
 
             if (lastSavedImage != null) {
+                savedStateHandle[SELECTED_COLORS_KEY] = List(5) { AppUtil.getRandomColor() }
                 updateUIDataByImage(lastSavedImage)
             } else {
-                generateImagePromptAndImage(null)
+
+                when (imageGenerationTagStateFlow.value) {
+                    IMAGE_CATEGORY_TAG.IMAGE_GENERATION_RANDOM_IMAGE_USING_KEYWORD_TAG -> {
+                        generateImagePromptAndImage(null)
+                    }
+
+                    IMAGE_CATEGORY_TAG.IMAGE_GENERATION_BY_COLOR_TAG -> {
+                        savedStateHandle[SELECTED_COLORS_KEY] = List(5) { AppUtil.getRandomColor() }
+                        generateImageByColors(selectedColorsStateFlow.value)
+                    }
+                }
             }
         }
     }
 
+    val allImagesForGeneratedImageCategoryTag: StateFlow<List<AIImage>> =
+        aiImageRepository.getImagesByTag(IMAGE_CATEGORY_TAG.IMAGE_GENERATION_RANDOM_IMAGE_USING_KEYWORD_TAG)
+            .stateIn(
+                scope = viewModelScope,
+                started = SharingStarted.WhileSubscribed(5000L), // Keep upstream flow active for 5s after last subscriber gone
+                initialValue = emptyList()
+            )
 
-    val allImages: StateFlow<List<AIImage>> = aiImageRepository.getAllImages()
-        .stateIn(
-            scope = viewModelScope,
-            started = SharingStarted.WhileSubscribed(5000L), // Keep upstream flow active for 5s after last subscriber gone
-            initialValue = emptyList()
-        )
-
+    val allImagesForGeneratedImageByColorTag: StateFlow<List<AIImage>> =
+        aiImageRepository.getImagesByTag(IMAGE_CATEGORY_TAG.IMAGE_GENERATION_BY_COLOR_TAG)
+            .stateIn(
+                scope = viewModelScope,
+                started = SharingStarted.WhileSubscribed(5000L), // Keep upstream flow active for 5s after last subscriber gone
+                initialValue = emptyList()
+            )
 
     fun saveOrDeleteAIImageFromDbBasedOnBookmarkMenuPressed() {
 
@@ -129,7 +169,7 @@ class RandomImageGenerationViewModel @Inject constructor(
                         imagePrompt = imageUiStateValue.imagePrompt,
                         imageFilePath = filePath ?: "",
                         aiModel = Constants.GEMINI_IMAGE_MODEL,
-                        tag = IMAGE_GENERATION_RANDOM_IMAGE_USING_KEYWORD_TAG,
+                        tag = imageGenerationTagStateFlow.value.name,
                         generatedAt = System.currentTimeMillis()
                     )
 
@@ -211,6 +251,16 @@ class RandomImageGenerationViewModel @Inject constructor(
         }
     }
 
+    fun generateImageByColors(colors: List<Int>) {
+
+        viewModelScope.launch {
+
+            savedStateHandle[UI_STATE_KEY] = RandomImageGenerationUIState(isLoading = true)
+            val prompt = generatePromptFromColorPalette(convertColorIntToHexCode(colors))
+            generateImageFromPrompt(prompt)
+        }
+    }
+
     private suspend fun generateImageFromPrompt(prompt: String) {
 
         geminiAiHelper.generateImageByPrompt(prompt)
@@ -233,6 +283,23 @@ class RandomImageGenerationViewModel @Inject constructor(
             }
     }
 
+    private fun generatePromptFromColorPalette(colorKeywords: String): String {
+
+        return "Create a high-resolution, imaginative digital artwork using only the following color palette: $colorKeywords.\n" +
+                "The image must rely exclusively on these colors as its primary visual language.\n" +
+                "The subject and composition should be highly creative and unpredictable. Possibilities include but are not limited to:\n" +
+                "Stylized characters (boy, girl, creatures, hybrids)\n" +
+                "Whimsical animals or fantastical beasts\n" +
+                "Abstract shapes, patterns, or surreal environments\n" +
+                "Dreamlike landscapes, floating structures, or gravity-defying objects\n" +
+                "Scenes in cartoon, anime, low-poly, or graphic novel styles\n" +
+                "Retro-futuristic tech, magical items, or cosmic architecture\n" +
+                "Anything that evokes emotion, charm, mystery, or fun\n" +
+                "Encourage imaginative storytelling within the artwork. Use dynamic compositions, playful forms, or symbolic visuals.\n" +
+                "Avoid repetitive natural landscapes (like standard mountains and valleys) unless creatively reinterpreted. Focus on originality and unexpected use of the palette.\n" +
+                "Use textures (soft gradients, painterly brushwork, grain) to enhance depth and style.\n" +
+                "Final output should be a 4K or higher digital painting or illustration, using a unique style (e.g., concept art, cel-shading, 2D flat, surreal digital painting, etc.)."
+    }
 
     /**
      * Saves the current generated image to the device's public "Downloads" directory.
@@ -253,11 +320,12 @@ class RandomImageGenerationViewModel @Inject constructor(
             val fileName =
                 "${uiState.value.imagePrompt.substring(0, 5)}_${System.currentTimeMillis()}.png"
 
-            val finalMessage: String = if (imageByteArray?.downloadImage(fileName, context.contentResolver) == true) {
-                "Image downloaded successfully"
-            } else {
-                "Image download failed"
-            }
+            val finalMessage: String =
+                if (imageByteArray?.downloadImage(fileName, context.contentResolver) == true) {
+                    "Image downloaded successfully"
+                } else {
+                    "Image download failed"
+                }
 
             withContext(Dispatchers.Main) { // Show toast on Main thread
                 Toast.makeText(context, finalMessage, Toast.LENGTH_SHORT).show()
@@ -270,6 +338,16 @@ class RandomImageGenerationViewModel @Inject constructor(
             isLoading = false,
             errorMessage = errorMessage
         )
+    }
+
+    fun convertColorIntToHexCode(currentSelectedColors: List<Int> = emptyList()): String {
+
+        return currentSelectedColors.joinToString {
+            String.format(
+                "#%06X",
+                (0xFFFFFF and it)
+            )
+        }
     }
 
     private fun generatePromptForRandomImagePrompt(keywords: String?): String {

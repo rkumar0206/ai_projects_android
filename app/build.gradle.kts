@@ -131,7 +131,8 @@ dependencies {
     implementation(libs.kotlinx.coroutines.android)
 
     //photoview - zoomable imageView
-    implementation("com.github.chrisbanes:PhotoView:2.3.0")
+    implementation(libs.photoview)
+    implementation(libs.colorpicker)
 
     implementation(libs.androidx.recyclerview)
     testImplementation(libs.junit)

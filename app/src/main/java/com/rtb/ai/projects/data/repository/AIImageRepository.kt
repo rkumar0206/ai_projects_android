@@ -3,6 +3,7 @@ package com.rtb.ai.projects.data.repository
 import android.util.Log
 import com.rtb.ai.projects.data.local.db.dao.AIImageDao
 import com.rtb.ai.projects.data.model.AIImage
+import com.rtb.ai.projects.util.constant.IMAGE_CATEGORY_TAG
 import kotlinx.coroutines.flow.Flow
 import java.io.File
 import javax.inject.Inject
@@ -41,8 +42,8 @@ class AIImageRepository @Inject constructor(private val aiImageDao: AIImageDao) 
         aiImageDao.deleteImage(image)
     }
 
-    suspend fun getLastSavedImage() : Flow<AIImage?> {
-        return aiImageDao.getLastSavedImage()
+    suspend fun getLastSavedImage(tag: IMAGE_CATEGORY_TAG) : Flow<AIImage?> {
+        return aiImageDao.getLastSavedImage(tag.name)
     }
 
     suspend fun deleteImageById(imageId: Long) {
@@ -63,8 +64,8 @@ class AIImageRepository @Inject constructor(private val aiImageDao: AIImageDao) 
         return aiImageDao.searchImagesByPrompt(promptQuery)
     }
 
-    fun getImagesByTag(tag: String): Flow<List<AIImage>> {
-        return aiImageDao.getImagesByTag(tag)
+    fun getImagesByTag(tag: IMAGE_CATEGORY_TAG): Flow<List<AIImage>> {
+        return aiImageDao.getImagesByTag(tag.name)
     }
 
     fun getImageByPath(imagePath: String): Flow<AIImage?> {

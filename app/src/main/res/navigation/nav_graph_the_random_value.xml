@@ -30,7 +30,7 @@
         android:id="@+id/randomImageGeneratorFragment"
         android:name="com.rtb.ai.projects.ui.feature_the_random_value.feature_random_image.RandomImageGeneratorFragment"
         android:label="AI Image"
-        tools:layout="@layout/fragment_random_image_generator" >
+        tools:layout="@layout/fragment_random_image_generator">
         <action
             android:id="@+id/action_randomImageGeneratorFragment_to_imageGenerationCategoryFragment"
             app:destination="@id/imageGenerationCategoryFragment" />
@@ -38,13 +38,25 @@
     <fragment
         android:id="@+id/imageGenerationCategoryFragment"
         android:name="com.rtb.ai.projects.ui.feature_the_random_value.feature_random_image.ImageGenerationCategoryFragment"
-        tools:layout="@layout/fragment_trv_category"
-        android:label="AI image category" >
+        android:label="AI image category"
+        tools:layout="@layout/fragment_trv_category">
         <action
             android:id="@+id/action_imageGenerationCategoryFragment_to_TrvCategoryFragment"
             app:destination="@id/TrvCategoryFragment" />
         <action
             android:id="@+id/action_imageGenerationCategoryFragment_to_randomImageGeneratorFragment"
             app:destination="@id/randomImageGeneratorFragment" />
+        <action
+            android:id="@+id/action_imageGenerationCategoryFragment_to_randomImageByColorFragment"
+            app:destination="@id/randomImageByColorFragment" />
+    </fragment>
+    <fragment
+        android:id="@+id/randomImageByColorFragment"
+        android:name="com.rtb.ai.projects.ui.feature_the_random_value.feature_random_image.RandomImageByColorFragment"
+        android:label="AI Image"
+        tools:layout="@layout/fragment_random_image_generator">
+        <action
+            android:id="@+id/action_randomImageByColorFragment_to_imageGenerationCategoryFragment"
+            app:destination="@id/imageGenerationCategoryFragment" />
     </fragment>
 </navigation>

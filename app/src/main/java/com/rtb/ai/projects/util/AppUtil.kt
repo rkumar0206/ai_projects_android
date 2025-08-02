@@ -6,6 +6,7 @@ import android.content.ClipboardManager
 import android.content.ContentResolver
 import android.content.ContentValues
 import android.content.Context
+import android.graphics.Color
 import android.net.Uri
 import android.os.Environment
 import android.provider.MediaStore
@@ -22,6 +23,7 @@ import java.io.FileInputStream
 import java.io.FileNotFoundException
 import java.io.FileOutputStream
 import java.io.IOException
+import java.util.Random
 import java.util.UUID
 
 
@@ -208,4 +210,18 @@ object AppUtil {
             return false
         }
     }
+
+    fun getRandomColor(): Int {
+        val random = Random()
+        // Generate reasonably bright and distinct random colors
+        val r = random.nextInt(156) + 100 // 100-255
+        val g = random.nextInt(156) + 100 // 100-255
+        val b = random.nextInt(156) + 100 // 100-255
+        return Color.rgb(r, g, b)
+    }
+
+    fun Context.showToast(message: String, duration: Int = Toast.LENGTH_SHORT) {
+        Toast.makeText(this, message, duration).show()
+    }
+
 }
