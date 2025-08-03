@@ -16,6 +16,9 @@
         <action
             android:id="@+id/action_TrvCategoryFragment_to_imageGenerationCategoryFragment"
             app:destination="@id/imageGenerationCategoryFragment" />
+        <action
+            android:id="@+id/action_TrvCategoryFragment_to_randomStoryFragment"
+            app:destination="@id/randomStoryFragment" />
     </fragment>
     <fragment
         android:id="@+id/randomRecipeFragment"
@@ -58,5 +61,14 @@
         <action
             android:id="@+id/action_randomImageByColorFragment_to_imageGenerationCategoryFragment"
             app:destination="@id/imageGenerationCategoryFragment" />
+    </fragment>
+    <fragment
+        android:id="@+id/randomStoryFragment"
+        android:name="com.rtb.ai.projects.ui.feature_the_random_value.feature_random_story.RandomStoryFragment"
+        android:label="Story"
+        tools:layout="@layout/fragment_random_story" >
+        <action
+            android:id="@+id/action_randomStoryFragment_to_TrvCategoryFragment"
+            app:destination="@id/TrvCategoryFragment" />
     </fragment>
 </navigation>

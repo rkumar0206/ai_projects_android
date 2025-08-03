@@ -30,6 +30,8 @@
             android:layout_height="wrap_content"
             android:layout_alignEnd="@+id/buttonApplyColors"
             android:layout_centerVertical="true"
+            android:padding="3dp"
+            android:background="?attr/selectableItemBackgroundBorderless"
             android:contentDescription="@string/refresh"
             android:src="@drawable/ic_refresh"
             app:layout_constraintBottom_toBottomOf="parent"

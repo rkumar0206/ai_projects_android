@@ -68,6 +68,10 @@ class TrvCategoryFragment : Fragment() {
                 findNavController().navigate(R.id.action_TrvCategoryFragment_to_imageGenerationCategoryFragment)
             }
 
+            2 -> {
+                findNavController().navigate(R.id.action_TrvCategoryFragment_to_randomStoryFragment)
+            }
+
         }
 
     }
@@ -77,9 +81,8 @@ class TrvCategoryFragment : Fragment() {
         return listOf(
             AIProjectCategory(0, R.drawable.food_recipe_img, getString(R.string.food_recipe)),
             AIProjectCategory(1, R.drawable.images_img, getString(R.string.images)),
-            AIProjectCategory(2, R.drawable.colors_img, getString(R.string.colors)),
+            AIProjectCategory(2, R.drawable.stories_img, getString(R.string.stories)),
             AIProjectCategory(3, R.drawable.github_img, getString(R.string.github)),
-            AIProjectCategory(4, R.drawable.stories_img, getString(R.string.stories)),
         )
     }
 

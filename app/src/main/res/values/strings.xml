@@ -92,4 +92,10 @@
     <string name="edit_color_5">Edit Color 5</string>
     <string name="color_1">Color 1:</string>
     <string name="saved_images">Saved Images</string>
+    <string name="info_about_core_premise">Info about Core Premise</string>
+    <string name="core_premise">Core Premise</string>
+    <string name="key_elements">Key Elements</string>
+    <string name="protagonist">Protagonist</string>
+    <string name="antagonist">Antagonist</string>
+    <string name="story_parameters">Story Parameters</string>
 </resources>
