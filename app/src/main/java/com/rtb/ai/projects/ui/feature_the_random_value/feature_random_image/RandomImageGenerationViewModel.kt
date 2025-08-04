@@ -8,14 +8,16 @@ import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.viewModelScope
 import com.rtb.ai.projects.data.model.AIImage
 import com.rtb.ai.projects.data.repository.AIImageRepository
+import com.rtb.ai.projects.ui.feature_the_random_value.feature_random_story.RandomStoryViewModel
 import com.rtb.ai.projects.util.AppUtil
 import com.rtb.ai.projects.util.AppUtil.downloadImage
 import com.rtb.ai.projects.util.AppUtil.retrieveImageAsByteArray
 import com.rtb.ai.projects.util.AppUtil.saveByteArrayToInternalFile
+import com.rtb.ai.projects.util.AppUtil.saveToCacheFile
 import com.rtb.ai.projects.util.GeminiAiHelper
 import com.rtb.ai.projects.util.constant.Constants
 import com.rtb.ai.projects.util.constant.Constants.LOADING
-import com.rtb.ai.projects.util.constant.IMAGE_CATEGORY_TAG
+import com.rtb.ai.projects.util.constant.ImageCategoryTag
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.delay
@@ -32,31 +34,9 @@ import javax.inject.Inject
 data class RandomImageGenerationUIState(
     val isLoading: Boolean = false,
     val imagePrompt: String = "",
-    val image: ByteArray? = null,
+    val imageFilePath: String? = null,
     val errorMessage: String? = null,
-) : Serializable {
-    override fun equals(other: Any?): Boolean {
-        if (this === other) return true
-        if (javaClass != other?.javaClass) return false
-
-        other as RandomImageGenerationUIState
-
-        if (isLoading != other.isLoading) return false
-        if (imagePrompt != other.imagePrompt) return false
-        if (!image.contentEquals(other.image)) return false
-        if (errorMessage != other.errorMessage) return false
-
-        return true
-    }
-
-    override fun hashCode(): Int {
-        var result = isLoading.hashCode()
-        result = 31 * result + imagePrompt.hashCode()
-        result = 31 * result + (image?.contentHashCode() ?: 0)
-        result = 31 * result + (errorMessage?.hashCode() ?: 0)
-        return result
-    }
-}
+) : Serializable
 
 @HiltViewModel
 class RandomImageGenerationViewModel @Inject constructor(
@@ -78,9 +58,9 @@ class RandomImageGenerationViewModel @Inject constructor(
         private const val TAG = "ImageGenViewModel"
     }
 
-    val imageGenerationTagStateFlow: StateFlow<IMAGE_CATEGORY_TAG> = savedStateHandle.getStateFlow(
+    val imageGenerationTagStateFlow: StateFlow<ImageCategoryTag> = savedStateHandle.getStateFlow(
         IMAGE_CATEGORY_TAG_KEY,
-        IMAGE_CATEGORY_TAG.IMAGE_GENERATION_RANDOM_IMAGE_USING_KEYWORD_TAG
+        ImageCategoryTag.IMAGE_GENERATION_RANDOM_IMAGE_USING_KEYWORD_TAG
     )
     val selectedColorsStateFlow: StateFlow<List<Int>> =
         savedStateHandle.getStateFlow(SELECTED_COLORS_KEY, emptyList())
@@ -100,7 +80,7 @@ class RandomImageGenerationViewModel @Inject constructor(
         }
     }
 
-    fun setImageGenerationTag(tag: IMAGE_CATEGORY_TAG) {
+    fun setImageGenerationTag(tag: ImageCategoryTag) {
         savedStateHandle[IMAGE_CATEGORY_TAG_KEY] = tag
     }
 
@@ -119,21 +99,23 @@ class RandomImageGenerationViewModel @Inject constructor(
             } else {
 
                 when (imageGenerationTagStateFlow.value) {
-                    IMAGE_CATEGORY_TAG.IMAGE_GENERATION_RANDOM_IMAGE_USING_KEYWORD_TAG -> {
+                    ImageCategoryTag.IMAGE_GENERATION_RANDOM_IMAGE_USING_KEYWORD_TAG -> {
                         generateImagePromptAndImage(null)
                     }
 
-                    IMAGE_CATEGORY_TAG.IMAGE_GENERATION_BY_COLOR_TAG -> {
+                    ImageCategoryTag.IMAGE_GENERATION_BY_COLOR_TAG -> {
                         savedStateHandle[SELECTED_COLORS_KEY] = List(5) { AppUtil.getRandomColor() }
                         generateImageByColors(selectedColorsStateFlow.value)
                     }
+
+                    else -> null
                 }
             }
         }
     }
 
     val allImagesForGeneratedImageCategoryTag: StateFlow<List<AIImage>> =
-        aiImageRepository.getImagesByTag(IMAGE_CATEGORY_TAG.IMAGE_GENERATION_RANDOM_IMAGE_USING_KEYWORD_TAG)
+        aiImageRepository.getImagesByTag(ImageCategoryTag.IMAGE_GENERATION_RANDOM_IMAGE_USING_KEYWORD_TAG)
             .stateIn(
                 scope = viewModelScope,
                 started = SharingStarted.WhileSubscribed(5000L), // Keep upstream flow active for 5s after last subscriber gone
@@ -141,7 +123,7 @@ class RandomImageGenerationViewModel @Inject constructor(
             )
 
     val allImagesForGeneratedImageByColorTag: StateFlow<List<AIImage>> =
-        aiImageRepository.getImagesByTag(IMAGE_CATEGORY_TAG.IMAGE_GENERATION_BY_COLOR_TAG)
+        aiImageRepository.getImagesByTag(ImageCategoryTag.IMAGE_GENERATION_BY_COLOR_TAG)
             .stateIn(
                 scope = viewModelScope,
                 started = SharingStarted.WhileSubscribed(5000L), // Keep upstream flow active for 5s after last subscriber gone
@@ -159,11 +141,17 @@ class RandomImageGenerationViewModel @Inject constructor(
 
                     val context = getApplication<Application>().applicationContext
 
-                    val filePath = imageUiStateValue.image?.saveByteArrayToInternalFile(
-                        context,
-                        "ai_generated_images",
-                        "${imageUiStateValue.imagePrompt.substring(0, 5)}_${UUID.randomUUID()}.png"
-                    )
+                    val filePath =
+                        retrieveImageAsByteArray(imageUiStateValue.imageFilePath)?.saveByteArrayToInternalFile(
+                            context,
+                            "ai_generated_images",
+                            "${
+                                imageUiStateValue.imagePrompt.substring(
+                                    0,
+                                    5
+                                )
+                            }_${UUID.randomUUID()}.png"
+                        )
 
                     val aiImage = AIImage(
                         imagePrompt = imageUiStateValue.imagePrompt,
@@ -221,7 +209,7 @@ class RandomImageGenerationViewModel @Inject constructor(
         savedStateHandle[UI_STATE_KEY] = RandomImageGenerationUIState(
             isLoading = false,
             imagePrompt = image.imagePrompt,
-            image = retrieveImageAsByteArray(image.imageFilePath)
+            imageFilePath = image.imageFilePath
         )
         savedStateHandle[IS_IMAGE_SAVED_TO_DB_KEY] = true
     }
@@ -271,7 +259,11 @@ class RandomImageGenerationViewModel @Inject constructor(
                     savedStateHandle[UI_STATE_KEY] = RandomImageGenerationUIState(
                         isLoading = false,
                         imagePrompt = prompt,
-                        image = image
+                        imageFilePath = image.saveToCacheFile(
+                            getApplication<Application>().applicationContext,
+                            prefix = "cached_image_${prompt.substring(0, 10)}",
+                            suffix = ".png"
+                        )
                     )
                     savedStateHandle[IS_IMAGE_SAVED_TO_DB_KEY] = false
                 } else {
@@ -308,7 +300,7 @@ class RandomImageGenerationViewModel @Inject constructor(
     fun downloadCurrentImage() {
 
         val context = getApplication<Application>().applicationContext
-        if (uiState.value.image == null) {
+        if (!uiState.value.imageFilePath.isNullOrBlank()) {
             viewModelScope.launch {
                 Toast.makeText(context, "No image to download", Toast.LENGTH_SHORT).show()
             }
@@ -316,7 +308,7 @@ class RandomImageGenerationViewModel @Inject constructor(
         }
 
         viewModelScope.launch(Dispatchers.IO) { // Perform file operations on IO dispatcher
-            val imageByteArray = uiState.value.image
+            val imageByteArray = retrieveImageAsByteArray(uiState.value.imageFilePath)
             val fileName =
                 "${uiState.value.imagePrompt.substring(0, 5)}_${System.currentTimeMillis()}.png"
 
@@ -365,4 +357,16 @@ class RandomImageGenerationViewModel @Inject constructor(
         return prompt
     }
 
+    override fun onCleared() {
+        super.onCleared()
+
+        val isSuccess =
+            AppUtil.clearApplicationCache(getApplication<Application>().applicationContext)
+
+        if (isSuccess) {
+            Log.d(RandomStoryViewModel.Companion.TAG, "onCleared: Cleared all caches from cache directory")
+        }else {
+            Log.d(RandomStoryViewModel.Companion.TAG, "onCleared: Unable to clear the caches from cache directory")
+        }
+    }
 }

@@ -18,7 +18,7 @@ import com.rtb.ai.projects.data.model.AIImage
 import com.rtb.ai.projects.databinding.BottomsheetSavedItemsBinding
 import com.rtb.ai.projects.ui.feature_the_random_value.feature_random_image.RandomImageGenerationViewModel
 import com.rtb.ai.projects.ui.feature_the_random_value.feature_random_image.adapter.SavedImagesAdapter
-import com.rtb.ai.projects.util.constant.IMAGE_CATEGORY_TAG
+import com.rtb.ai.projects.util.constant.ImageCategoryTag
 import dagger.hilt.android.AndroidEntryPoint
 import kotlinx.coroutines.launch
 
@@ -29,7 +29,7 @@ class SavedImagesBottomSheet : BottomSheetDialogFragment() {
     private val binding get() = _binding!!
     private val viewModel: RandomImageGenerationViewModel by activityViewModels()
     private lateinit var savedImagesAdapter: SavedImagesAdapter
-    private lateinit var currentImageCategoryTag: IMAGE_CATEGORY_TAG
+    private lateinit var currentImageCategoryTag: ImageCategoryTag
 
     companion object {
         const val TAG = "SavedImagesBottomSheet"
@@ -37,7 +37,7 @@ class SavedImagesBottomSheet : BottomSheetDialogFragment() {
         const val BUNDLE_KEY_IMAGE_ID = "bundleImageId"
         const val CURRENT_IMAGE_CATEGORY_TAG = "currentImageCategoryTag"
 
-        fun newInstance(tag: IMAGE_CATEGORY_TAG = IMAGE_CATEGORY_TAG.IMAGE_GENERATION_RANDOM_IMAGE_USING_KEYWORD_TAG): SavedImagesBottomSheet {
+        fun newInstance(tag: ImageCategoryTag = ImageCategoryTag.IMAGE_GENERATION_RANDOM_IMAGE_USING_KEYWORD_TAG): SavedImagesBottomSheet {
             val fragment = SavedImagesBottomSheet()
             val args = Bundle()
             args.putString(CURRENT_IMAGE_CATEGORY_TAG, tag.name)
@@ -51,10 +51,10 @@ class SavedImagesBottomSheet : BottomSheetDialogFragment() {
         arguments?.let {
             val currentTag = it.getString(
                 CURRENT_IMAGE_CATEGORY_TAG,
-                IMAGE_CATEGORY_TAG.IMAGE_GENERATION_RANDOM_IMAGE_USING_KEYWORD_TAG.name
+                ImageCategoryTag.IMAGE_GENERATION_RANDOM_IMAGE_USING_KEYWORD_TAG.name
             )
-            currentImageCategoryTag = IMAGE_CATEGORY_TAG.valueOf(currentTag)
-            viewModel.setImageGenerationTag(IMAGE_CATEGORY_TAG.valueOf(currentTag))
+            currentImageCategoryTag = ImageCategoryTag.valueOf(currentTag)
+            viewModel.setImageGenerationTag(ImageCategoryTag.valueOf(currentTag))
         }
     }
 
@@ -101,7 +101,7 @@ class SavedImagesBottomSheet : BottomSheetDialogFragment() {
 
                 when (currentImageCategoryTag) {
 
-                    IMAGE_CATEGORY_TAG.IMAGE_GENERATION_RANDOM_IMAGE_USING_KEYWORD_TAG -> {
+                    ImageCategoryTag.IMAGE_GENERATION_RANDOM_IMAGE_USING_KEYWORD_TAG -> {
                         // Observe the list of all Images from the ViewModel
                         viewModel.allImagesForGeneratedImageCategoryTag.collect { images ->
                             Log.d(TAG, "Saved images received: ${images.size}")
@@ -110,13 +110,15 @@ class SavedImagesBottomSheet : BottomSheetDialogFragment() {
                         }
                     }
 
-                    IMAGE_CATEGORY_TAG.IMAGE_GENERATION_BY_COLOR_TAG -> {
+                    ImageCategoryTag.IMAGE_GENERATION_BY_COLOR_TAG -> {
                         viewModel.allImagesForGeneratedImageByColorTag.collect { images ->
                             Log.d(TAG, "Saved images received: ${images.size}")
                             updateUI(images)
                             savedImagesAdapter.submitList(images)
                         }
                     }
+
+                    else -> null
                 }
             }
         }

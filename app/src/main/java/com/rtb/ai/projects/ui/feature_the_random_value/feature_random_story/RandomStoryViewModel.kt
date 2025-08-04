@@ -1,13 +1,29 @@
 package com.rtb.ai.projects.ui.feature_the_random_value.feature_random_story
 
+import android.app.Application
 import android.util.Log
+import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.SavedStateHandle
-import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.rtb.ai.projects.data.model.AIImage
+import com.rtb.ai.projects.data.model.AIStory
 import com.rtb.ai.projects.data.model.ContentItem
+import com.rtb.ai.projects.data.model.ContentItemForDbSaving
 import com.rtb.ai.projects.data.model.StoryInput
+import com.rtb.ai.projects.data.repository.AIImageRepository
+import com.rtb.ai.projects.data.repository.AIStoryRepository
+import com.rtb.ai.projects.util.AppUtil
+import com.rtb.ai.projects.util.AppUtil.retrieveImageAsByteArray
+import com.rtb.ai.projects.util.AppUtil.saveByteArrayToInternalFile
+import com.rtb.ai.projects.util.AppUtil.saveToCacheFile
 import com.rtb.ai.projects.util.GeminiAiHelper
+import com.rtb.ai.projects.util.constant.Constants
+import com.rtb.ai.projects.util.constant.Constants.LOADING
+import com.rtb.ai.projects.util.constant.ImageCategoryTag
 import dagger.hilt.android.lifecycle.HiltViewModel
+import kotlinx.coroutines.delay
+import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
 import java.io.Serializable
 import java.util.UUID
@@ -15,7 +31,6 @@ import javax.inject.Inject
 
 data class RandomStoryUIState(
     val isLoading: Boolean = false,
-    val isImageLoading: Boolean = false,
     val storyTitle: String? = null,
     val storyContent: List<ContentItem> = emptyList(),
     val errorMessage: String? = null
@@ -25,23 +40,222 @@ data class RandomStoryUIState(
 class RandomStoryViewModel @Inject constructor(
     private val geminiAiHelper: GeminiAiHelper,
     private val savedStateHandle: SavedStateHandle,
-) : ViewModel() {
+    private val aiStoryRepository: AIStoryRepository,
+    private val aiImageRepository: AIImageRepository,
+    application: Application
+) : AndroidViewModel(application) {
 
     companion object {
         const val UI_STATE_KEY = "ui_state_key"
+        const val IS_STORY_SAVED_TO_DB_KEY = "isStorySavedToDb"
+        const val TYPE_TEXT = "TEXT"
+        const val TYPE_IMAGE = "IMAGE"
         const val TAG = "RandomStoryViewModel"
     }
 
-    val uiState = savedStateHandle.getStateFlow(UI_STATE_KEY, RandomStoryUIState(isLoading = false))
+    val uiState = savedStateHandle.getStateFlow(UI_STATE_KEY, RandomStoryUIState(isLoading = true))
+    val isStorySavedToDb: StateFlow<Boolean> =
+        savedStateHandle.getStateFlow(IS_STORY_SAVED_TO_DB_KEY, false)
 
     private var storyTitle: String? = ""
+    private val imageGenerationInProgress = mutableSetOf<String>()
 
-//    init {
-//        viewModelScope.launch {
-//            delay(1000)
-//            generateRandomStory(StoryInput(length = "short"))
-//        }
-//    }
+    init {
+        viewModelScope.launch {
+            delay(1000)
+
+            val lastSavedStory = aiStoryRepository.getLastSavedRepository().first()
+
+            if (lastSavedStory != null) {
+                updateUiBySavedStory(lastSavedStory)
+            } else {
+                generateRandomStory(StoryInput(length = "500"))
+            }
+        }
+    }
+
+    private fun updateUiBySavedStory(story: AIStory) {
+
+        savedStateHandle[UI_STATE_KEY] = RandomStoryUIState(
+            isLoading = false,
+            storyTitle = story.storyTitle,
+            storyContent = getStoryContentItemListFromStory(story)
+        )
+        savedStateHandle[IS_STORY_SAVED_TO_DB_KEY] = true
+    }
+
+    private fun getStoryContentItemListFromStory(story: AIStory): List<ContentItem> {
+
+        val contentItems = mutableListOf<ContentItem>()
+
+        story.storyContent?.sortedBy { it.position }?.forEach { contentItemForDbSaving ->
+
+            when (contentItemForDbSaving.type) {
+                TYPE_TEXT -> {
+                    contentItems.add(
+                        ContentItem.TextContent(
+                            itemId = contentItemForDbSaving.itemId,
+                            text = contentItemForDbSaving.text ?: ""
+                        )
+                    )
+                }
+
+                TYPE_IMAGE -> {
+                    contentItems.add(
+                        ContentItem.ImageContent(
+                            itemId = contentItemForDbSaving.itemId,
+                            imageFilePath = contentItemForDbSaving.imageFilePath,
+                            imagePrompt = contentItemForDbSaving.imagePrompt
+                        )
+                    )
+                }
+            }
+        }
+        return contentItems
+    }
+
+    // ---------------------------------- DB -----------------------------------
+
+    fun saveOrDeleteStoryFromDbBasedOnBookmarkMenuPressed() {
+
+        viewModelScope.launch {
+
+            if (!isStorySavedToDb.value) {
+
+                Log.d(
+                    TAG,
+                    "saveOrDeleteStoryFromDbBasedOnBookmarkMenuPressed: Saving story"
+                )
+
+                val storyUiStateValue = uiState.value
+
+                if (!storyUiStateValue.storyTitle.isNullOrBlank() && storyUiStateValue.storyTitle != LOADING) {
+
+                    val story = AIStory(
+                        storyTitle = storyUiStateValue.storyTitle,
+                        storyContent = null,
+                        generatedAt = System.currentTimeMillis()
+                    )
+
+                    insertStoryAndItsImages(story, storyUiStateValue.storyContent)
+                }
+            } else {
+
+                if (!uiState.value.storyTitle.isNullOrBlank() && uiState.value.storyTitle != LOADING) {
+
+                    val storyToDelete =
+                        aiStoryRepository.getStoryByTitle(uiState.value.storyTitle!!).first()
+
+                    if (storyToDelete != null) {
+
+                        // delete story images
+                        deleteStoryImages(storyToDelete)
+                        aiStoryRepository.deleteStory(storyToDelete)
+                        savedStateHandle[IS_STORY_SAVED_TO_DB_KEY] = false
+                    }
+                }
+            }
+        }
+
+    }
+
+    fun getAndShowStoryById(storyId: Long) {
+        viewModelScope.launch {
+            val story = aiStoryRepository.getStoryById(storyId).first()
+            if (story != null) {
+                updateUiBySavedStory(story)
+            }
+        }
+    }
+
+    private suspend fun deleteStoryImages(storyToDelete: AIStory) {
+
+        if (storyToDelete.storyContent != null) {
+
+            storyToDelete.storyContent
+                ?.filter { it.type == TYPE_IMAGE }
+                ?.forEach { imageContent ->
+                    if (!imageContent.imageFilePath.isNullOrBlank() && !imageContent.imagePrompt.isNullOrBlank()) {
+
+                        val image =
+                            aiImageRepository.getAIIMageByImagePrompt(imageContent.imagePrompt)
+                                .first()
+
+                        image?.let {
+                            aiImageRepository.deleteImageAndFile(image)
+                        }
+                    }
+                }
+        }
+    }
+
+    private suspend fun insertStoryAndItsImages(
+        story: AIStory,
+        storyContent: List<ContentItem>
+    ) {
+
+        val context = getApplication<Application>().applicationContext
+
+        val contentItemForDb: ArrayList<ContentItemForDbSaving> = arrayListOf()
+
+        storyContent
+            .forEachIndexed { i, content ->
+
+                if (content is ContentItem.TextContent) {
+
+                    val textContent: ContentItem.TextContent = content
+                    contentItemForDb.add(
+                        ContentItemForDbSaving(
+                            itemId = textContent.itemId,
+                            type = TYPE_TEXT,
+                            position = i,
+                            text = textContent.text
+                        )
+                    )
+                }
+
+                if (content is ContentItem.ImageContent && !content.imageFilePath.isNullOrBlank() && !content.imagePrompt.isNullOrBlank()) {
+
+                    val byteArrayInCacheDir = retrieveImageAsByteArray(content.imageFilePath)
+
+                    val savedImageFilePath =
+                        byteArrayInCacheDir?.saveByteArrayToInternalFile(
+                            context,
+                            "story_images",
+                            fileName = content.itemId.replace("-", "_")
+                        )
+
+                    if (savedImageFilePath != null) {
+
+                        val aiImage = AIImage(
+                            imagePrompt = content.imagePrompt,
+                            imageFilePath = savedImageFilePath,
+                            aiModel = Constants.GEMINI_IMAGE_MODEL,
+                            tag = ImageCategoryTag.IMAGE_GENERATION_FOR_STORY.name,
+                            generatedAt = System.currentTimeMillis()
+                        )
+
+                        aiImageRepository.insertImage(aiImage)
+
+                        contentItemForDb.add(
+                            ContentItemForDbSaving(
+                                itemId = content.itemId,
+                                type = TYPE_IMAGE,
+                                position = i,
+                                imageFilePath = savedImageFilePath,
+                                imagePrompt = content.imagePrompt
+                            )
+                        )
+                    }
+                }
+            }
+
+        story.storyContent = contentItemForDb
+        aiStoryRepository.insertStory(story)
+        savedStateHandle[IS_STORY_SAVED_TO_DB_KEY] = true
+    }
+
+    // -------------------------------------------------------------------------
 
     fun generateRandomStory(storyInput: StoryInput? = null) {
 
@@ -51,6 +265,7 @@ class RandomStoryViewModel @Inject constructor(
                 isLoading = true,
                 errorMessage = null
             )
+            savedStateHandle[IS_STORY_SAVED_TO_DB_KEY] = false
 
             geminiAiHelper.getPromptTextResult(generatePrompt(storyInput))
                 .onSuccess { result ->
@@ -81,7 +296,6 @@ class RandomStoryViewModel @Inject constructor(
             errorMessage = errorMessage
         )
     }
-
 
     fun parseStoryOutput(story: String): List<ContentItem> {
         val contentItems = mutableListOf<ContentItem>()
@@ -129,7 +343,7 @@ class RandomStoryViewModel @Inject constructor(
                     contentItems.add(
                         ContentItem.ImageContent(
                             itemId = UUID.randomUUID().toString(),
-                            image = null, // You can replace this with your image generation output
+                            imageFilePath = null, // You can replace this with your image generation output
                             imagePrompt = imagePrompt,
                             imageResId = null
                         )
@@ -158,30 +372,54 @@ class RandomStoryViewModel @Inject constructor(
     }
 
     fun generateImageForItem(itemId: String, prompt: String) {
-        savedStateHandle[UI_STATE_KEY] = uiState.value.copy(isImageLoading = true)
+
+        if (imageGenerationInProgress.contains(itemId)) {
+            Log.d(TAG, "Image generation already in progress for item $itemId. Skipping.")
+            return
+        }
+
+        savedStateHandle[UI_STATE_KEY] = uiState.value.copy()
         viewModelScope.launch {
+
+            delay(800)
+
             Log.d(
                 TAG,
                 "generateImageForItem: Generating image for item $itemId with prompt: $prompt"
             )
-            geminiAiHelper.generateImageByPrompt(prompt)
-                .onSuccess { result ->
-                    if (result != null && result.isPresent) {
-                        updateImageInStoryContent(itemId, result.get())
-                    } else {
+
+            val aiImageFromDb = aiImageRepository.getAIIMageByImagePrompt(prompt).first()
+
+            if (aiImageFromDb == null) {
+                imageGenerationInProgress.add(itemId)
+                geminiAiHelper.generateImageByPrompt(prompt)
+                    .onSuccess { result ->
+                        if (result != null && result.isPresent) {
+                            updateImageInStoryContent(itemId, result.get())
+                        } else {
+                            Log.e(
+                                TAG,
+                                "generateImageForItem: Failed to generate image for item $itemId"
+                            )
+                        }
+                            .also {
+                                imageGenerationInProgress.remove(itemId)
+                            }
+                    }
+                    .onFailure { error ->
                         Log.e(
                             TAG,
-                            "generateImageForItem: Failed to generate image for item $itemId"
+                            "generateImageForItem: Error for item $itemId: ${error.message}",
+                            error
                         )
+                        imageGenerationInProgress.remove(itemId)
                     }
+            } else {
+                val imageBytes = retrieveImageAsByteArray(aiImageFromDb.imageFilePath)
+                imageBytes?.let {
+                    updateImageInStoryContent(itemId, it)
                 }
-                .onFailure { error ->
-                    Log.e(
-                        TAG,
-                        "generateImageForItem: Error for item $itemId: ${error.message}",
-                        error
-                    )
-                }
+            }
         }
     }
 
@@ -189,16 +427,21 @@ class RandomStoryViewModel @Inject constructor(
         val currentState = uiState.value
         val updatedContent = currentState.storyContent.map { item ->
             if (item is ContentItem.ImageContent && item.itemId == itemId) {
-                item.copy(image = imageBytes, imageResId = null) // Clear placeholder
+                item.copy(
+                    imageFilePath = imageBytes.saveToCacheFile(
+                        getApplication<Application>().applicationContext,
+                        "cached_story_images_$itemId",
+                        ".png"
+                    ), imageResId = null
+                )
             } else {
                 item
             }
         }
         savedStateHandle[UI_STATE_KEY] =
-            currentState.copy(storyContent = updatedContent, isImageLoading = false)
+            currentState.copy(storyContent = updatedContent)
         Log.d(TAG, "updateImageInStoryContent: Updated image for item $itemId")
     }
-
 
     private fun generatePrompt(storyInput: StoryInput?): String {
 
@@ -248,10 +491,47 @@ class RandomStoryViewModel @Inject constructor(
     Each image prompt should be highly descriptive, imaginative, and cinematic. Represent a key story moment, location, or character. Follow visual AI prompt standards: subject, environment, mood, and art style (e.g., gritty digital painting, whimsical watercolor).
 """.trimIndent()
 
-        storyPrompt += "\nUser Inputs: $storyInput"
+        //storyPrompt += "\nUser Inputs: $storyInput"
+
+        storyInput?.let { input ->
+            storyPrompt += "\n\n--- User Provided Inputs ---"
+            input.genre?.let { storyPrompt += "\nGenre: $it" }
+            input.targetAudience?.let { storyPrompt += "\nTarget Audience: $it" }
+            input.corePremise?.let { storyPrompt += "\nCore Premise: $it" }
+            input.keyElements?.let { elements ->
+                storyPrompt += "\nKey Elements:"
+                elements.protagonist?.let { storyPrompt += "\n  Protagonist: $it" }
+                elements.antagonist?.let { storyPrompt += "\n  Antagonist: $it" }
+                elements.setting?.let { storyPrompt += "\n  Setting: $it" }
+                elements.conflict?.let { storyPrompt += "\n  Conflict: $it" }
+                elements.themes?.let { if (it.isNotEmpty()) storyPrompt += "\n  Themes: ${it.joinToString()}" }
+                elements.moodTone?.let { storyPrompt += "\n  Mood/Tone: $it" }
+            }
+            input.length?.let { storyPrompt += "\nLength: $it" }
+            input.outputFormat?.let { storyPrompt += "\nOutput Format: $it" }
+            input.language?.let { storyPrompt += "\nLanguage: $it" }
+            storyPrompt += "\n---------------------------\n"
+        } ?: run {
+            storyPrompt += "\n\n--- No Specific User Inputs Provided ---"
+            storyPrompt += "\nUsing default length: 500 words."
+            storyPrompt += "\n-------------------------------------\n"
+        }
 
         Log.d(TAG, "generatePrompt: prompt\n$storyPrompt")
 
         return storyPrompt
+    }
+
+    override fun onCleared() {
+        super.onCleared()
+
+        val isSuccess =
+            AppUtil.clearApplicationCache(getApplication<Application>().applicationContext)
+
+        if (isSuccess) {
+            Log.d(TAG, "onCleared: Cleared all caches from cache directory")
+        }else {
+            Log.d(TAG, "onCleared: Unable to clear the caches from cache directory")
+        }
     }
 }

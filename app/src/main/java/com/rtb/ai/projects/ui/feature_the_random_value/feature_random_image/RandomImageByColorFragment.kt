@@ -22,9 +22,9 @@ import com.rtb.ai.projects.R
 import com.rtb.ai.projects.databinding.FragmentRandomImageGeneratorBinding
 import com.rtb.ai.projects.ui.feature_the_random_value.feature_random_image.bottomsheet.ColorPickerBottomSheet
 import com.rtb.ai.projects.ui.feature_the_random_value.feature_random_image.bottomsheet.SavedImagesBottomSheet
+import com.rtb.ai.projects.util.AppUtil
 import com.rtb.ai.projects.util.AppUtil.copyToClipboard
-import com.rtb.ai.projects.util.AppUtil.showToast
-import com.rtb.ai.projects.util.constant.IMAGE_CATEGORY_TAG
+import com.rtb.ai.projects.util.constant.ImageCategoryTag
 import dagger.hilt.android.AndroidEntryPoint
 import kotlinx.coroutines.launch
 
@@ -66,7 +66,7 @@ class RandomImageByColorFragment : Fragment() {
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
 
-        viewModel.setImageGenerationTag(IMAGE_CATEGORY_TAG.IMAGE_GENERATION_BY_COLOR_TAG)
+        viewModel.setImageGenerationTag(ImageCategoryTag.IMAGE_GENERATION_BY_COLOR_TAG)
 
         binding.textViewImagePrompt.text = ""
         binding.imageViewGenerated.setOnClickListener { togglePromptVisibility() }
@@ -117,10 +117,10 @@ class RandomImageByColorFragment : Fragment() {
             binding.groupTextElements.visibility = View.GONE
         }
 
-        if (uiState.image != null) {
+        if (!uiState.imageFilePath.isNullOrBlank()) {
 
             Glide.with(requireContext())
-                .load(uiState.image)
+                .load(AppUtil.retrieveImageAsByteArray(uiState.imageFilePath))
                 .placeholder(R.drawable.generate_random_image) // Your placeholder
                 .error(R.drawable.ic_broken_image) // Error placeholder
                 .into(binding.imageViewGenerated)
@@ -256,7 +256,7 @@ class RandomImageByColorFragment : Fragment() {
     }
 
     private fun showSavedImagesBottomSheet() {
-        val savedImageSheet = SavedImagesBottomSheet.newInstance(IMAGE_CATEGORY_TAG.IMAGE_GENERATION_BY_COLOR_TAG)
+        val savedImageSheet = SavedImagesBottomSheet.newInstance(ImageCategoryTag.IMAGE_GENERATION_BY_COLOR_TAG)
         savedImageSheet.show(parentFragmentManager, SavedImagesBottomSheet.TAG)
     }
 

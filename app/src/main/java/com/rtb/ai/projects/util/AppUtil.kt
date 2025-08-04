@@ -211,6 +211,87 @@ object AppUtil {
         }
     }
 
+
+    /**
+     * Saves a ByteArray to a temporary file in the app's cache directory.
+     *
+     * @param context The application context.
+     * @param prefix A prefix for the filename (e.g., "img_").
+     * @param suffix A suffix/extension for the filename (e.g., ".jpg").
+     * @return The absolute path to the saved file, or null if saving failed.
+     */
+    fun ByteArray.saveToCacheFile(
+        context: Context,
+        prefix: String = "cached_img_",
+        suffix: String = ".tmp" // Use .tmp or a specific image extension
+    ): String? {
+        return try {
+            // Create a unique file in the cache directory
+            val tempFile = File.createTempFile(prefix, suffix, context.cacheDir)
+
+            FileOutputStream(tempFile).use { fos ->
+                fos.write(this)
+            }
+
+            tempFile.absolutePath // Return the path of the saved file
+        } catch (e: IOException) {
+            // Log the error or handle it appropriately
+            e.printStackTrace()
+            null // Return null if there was an error
+        }
+    }
+
+
+    /**
+     * Deletes all files and subdirectories within the application's cache directory.
+     *
+     * @param context The application context.
+     * @return true if all deletions were successful, false otherwise.
+     */
+    fun clearApplicationCache(context: Context): Boolean {
+        val cacheDir = context.cacheDir
+        return if (cacheDir != null && cacheDir.isDirectory) {
+            deleteFilesInDirectory(cacheDir)
+        } else {
+            false
+        }
+    }
+
+    /**
+     * Helper function to recursively delete files and subdirectories.
+     */
+    private fun deleteFilesInDirectory(dir: File): Boolean {
+        var success = true
+        dir.listFiles()?.forEach { file ->
+            if (file.isDirectory) {
+                if (!deleteFilesInDirectory(file)) {
+                    success = false
+                }
+            }
+            if (!file.delete()) {
+                // Log an error or handle the failure to delete
+                println("Failed to delete ${file.absolutePath}")
+                success = false
+            }
+        }
+        // After deleting contents, try to delete the directory itself if it was not the main cache dir
+        // For the main cacheDir, we only delete its contents.
+        // If 'dir' could be a subdirectory you also want to remove, you might add dir.delete() here.
+        // However, for context.cacheDir itself, you typically only clear its contents.
+        return success
+    }
+
+//    fun clearOrphanedStoryImages(context: Context, prefix: String = "temp_", suffix: String = ".png") {
+//        val cacheDir = context.cacheDir
+//        cacheDir?.listFiles { file ->
+//            file.isFile && file.name.startsWith(prefix) && file.name.endsWith(suffix)
+//        }?.forEach { file ->
+//            if (!file.delete()) {
+//                println("Failed to delete orphaned file: ${file.absolutePath}")
+//            }
+//        }
+//    }
+
     fun getRandomColor(): Int {
         val random = Random()
         // Generate reasonably bright and distinct random colors

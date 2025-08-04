@@ -5,10 +5,11 @@
     android:layout_width="match_parent"
     android:layout_height="wrap_content"
     android:orientation="vertical"
-    android:paddingStart="16dp"
-    android:paddingTop="8dp"
-    android:paddingEnd="16dp"
-    android:paddingBottom="8dp">
+    android:paddingStart="1dp"
+    android:paddingTop="1dp"
+    android:background="#80000000"
+    android:paddingEnd="1dp"
+    android:paddingBottom="1dp">
 
     <com.github.chrisbanes.photoview.PhotoView
         android:id="@+id/imageViewContent"
@@ -21,6 +22,55 @@
         app:layout_constraintHorizontal_bias="0.5"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toTopOf="parent" /> <!-- Add to strings.xml -->
+
+
+    <!-- Group for text and copy icon, to animate visibility together -->
+    <androidx.constraintlayout.widget.Group
+        android:id="@+id/groupTextElements"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:visibility="gone"
+        app:constraint_referenced_ids="scrollViewPromptText,imageViewCopyPrompt"
+        tools:visibility="visible" />
+
+
+    <androidx.core.widget.NestedScrollView
+        android:id="@+id/scrollViewPromptText"
+        android:layout_width="0dp"
+        android:layout_height="150dp"
+        android:layout_marginStart="16dp"
+        android:layout_marginEnd="8dp"
+        android:background="#80000000"
+        android:padding="8dp"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintEnd_toStartOf="@+id/imageViewCopyPrompt"
+        app:layout_constraintStart_toStartOf="parent">
+
+        <TextView
+            android:id="@+id/textViewImagePrompt"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:textColor="@android:color/white"
+            android:textSize="14sp"
+            tools:text="A beautiful landscape with mountains and a lake during sunset, digital art, high detail, vibrant colors. This is a very long prompt to test the scrolling capability of the TextView and ensure that it wraps correctly and allows the user to see all of the content by scrolling down. nnkjakjbjkabj ajakjbjabjabjabjabjkabjabjabnannjajajkajknkankjnajknakjnakj ankjnkankjnakjn akjnakjnaankjnananannanaknkjankjankjnaknakjnakjnakjnakjnkajnkajnakjnakjnakjnajknajknakjanknakjnakna" />
+    </androidx.core.widget.NestedScrollView>
+
+    <ImageButton
+        android:id="@+id/imageViewCopyPrompt"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginEnd="8dp"
+        android:background="?attr/selectableItemBackgroundBorderless"
+        android:clickable="true"
+        android:contentDescription="@string/copy_prompt_to_clipboard"
+        android:focusable="true"
+        android:padding="12dp"
+        android:src="@drawable/ic_copy"
+        app:layout_constraintBottom_toBottomOf="@+id/scrollViewPromptText"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintTop_toTopOf="@+id/scrollViewPromptText"
+        app:tint="@color/white" />
+
 
     <com.google.android.material.progressindicator.CircularProgressIndicator
         android:id="@+id/progressBarLoading"

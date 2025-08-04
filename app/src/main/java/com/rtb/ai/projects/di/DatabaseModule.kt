@@ -4,6 +4,7 @@ import android.content.Context
 import androidx.room.Room
 import com.rtb.ai.projects.data.local.db.AppDatabase
 import com.rtb.ai.projects.data.local.db.dao.AIImageDao
+import com.rtb.ai.projects.data.local.db.dao.AIStoryDao
 import com.rtb.ai.projects.data.local.db.dao.RecipeDao
 import dagger.Module
 import dagger.Provides
@@ -36,6 +37,12 @@ object DatabaseModule {
     @Provides
     fun provideAIImageDao(appDatabase: AppDatabase): AIImageDao {
         return appDatabase.aiImageDao()
+    }
+
+    @Provides
+    @Singleton
+    fun provideAIStoryDao(appDatabase: AppDatabase): AIStoryDao {
+        return appDatabase.aiStoryDao()
     }
 }
 

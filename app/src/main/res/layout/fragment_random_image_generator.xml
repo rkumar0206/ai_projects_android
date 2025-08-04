@@ -14,9 +14,9 @@
         android:layout_width="0dp"
         android:layout_height="0dp"
         android:layout_marginBottom="16dp"
+        android:background="@color/black"
         android:contentDescription="@string/generated_image_description"
         android:scaleType="centerInside"
-        android:background="@color/black"
         app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"
@@ -65,11 +65,11 @@
         android:contentDescription="@string/copy_prompt_to_clipboard"
         android:focusable="true"
         android:padding="12dp"
-        app:tint="@color/white"
         android:src="@drawable/ic_copy"
         app:layout_constraintBottom_toBottomOf="@+id/scrollViewPromptText"
         app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintTop_toTopOf="@+id/scrollViewPromptText" />
+        app:layout_constraintTop_toTopOf="@+id/scrollViewPromptText"
+        app:tint="@color/white" />
 
     <!-- Loading Spinner (ProgressBar) -->
     <com.google.android.material.progressindicator.CircularProgressIndicator

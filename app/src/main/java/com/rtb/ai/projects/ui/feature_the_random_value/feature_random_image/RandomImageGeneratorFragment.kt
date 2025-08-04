@@ -22,6 +22,7 @@ import com.rtb.ai.projects.R
 import com.rtb.ai.projects.databinding.FragmentRandomImageGeneratorBinding
 import com.rtb.ai.projects.ui.feature_the_random_value.feature_random_image.bottomsheet.ImageKeywordsBottomSheet
 import com.rtb.ai.projects.ui.feature_the_random_value.feature_random_image.bottomsheet.SavedImagesBottomSheet
+import com.rtb.ai.projects.util.AppUtil
 import com.rtb.ai.projects.util.AppUtil.copyToClipboard
 import dagger.hilt.android.AndroidEntryPoint
 import kotlinx.coroutines.launch
@@ -122,10 +123,10 @@ class RandomImageGeneratorFragment : Fragment() {
             binding.groupTextElements.visibility = View.GONE
         }
 
-        if (uiState.image != null) {
+        if (!uiState.imageFilePath.isNullOrBlank()) {
 
             Glide.with(requireContext())
-                .load(uiState.image)
+                .load(AppUtil.retrieveImageAsByteArray(uiState.imageFilePath))
                 .placeholder(R.drawable.generate_random_image) // Your placeholder
                 .error(R.drawable.ic_broken_image) // Error placeholder
                 .into(binding.imageViewGenerated)

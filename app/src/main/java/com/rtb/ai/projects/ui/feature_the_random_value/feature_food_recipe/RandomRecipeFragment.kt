@@ -22,6 +22,7 @@ import com.rtb.ai.projects.R
 import com.rtb.ai.projects.databinding.FragmentRandomRecipeBinding
 import com.rtb.ai.projects.ui.feature_the_random_value.feature_food_recipe.bottomsheet.FilterRandomRecipeBottomSheet
 import com.rtb.ai.projects.ui.feature_the_random_value.feature_food_recipe.bottomsheet.SavedRecipesBottomSheet
+import com.rtb.ai.projects.util.AppUtil
 import com.rtb.ai.projects.util.AppUtil.displayMarkdownWithMarkwon
 import dagger.hilt.android.AndroidEntryPoint
 import kotlinx.coroutines.launch
@@ -42,7 +43,7 @@ class RandomRecipeFragment : Fragment() {
     private var currentIngredientsFilter: String? = null
     private var currentOtherConsiderationsFilter: String? = null
     private var isRecipeRefreshing = true
-    private var isRecipeAlreadySaved = false;
+    private var isRecipeAlreadySaved = false
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -150,10 +151,10 @@ class RandomRecipeFragment : Fragment() {
             binding.imageViewRecipe.visibility = View.VISIBLE
             binding.divider2.visibility = View.INVISIBLE
 
-            if (imageResult.image != null) {
+            if (imageResult.imageFilePath != null) {
 
                 Glide.with(requireContext())
-                    .load(imageResult.image)
+                    .load(AppUtil.retrieveImageAsByteArray(imageResult.imageFilePath))
                     .placeholder(R.drawable.food_recipe_img) // Your placeholder
                     .error(R.drawable.ic_broken_image) // Error placeholder
                     .into(binding.imageViewRecipe)

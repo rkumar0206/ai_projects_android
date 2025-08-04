@@ -13,6 +13,8 @@ import com.bumptech.glide.Glide
 import com.rtb.ai.projects.R
 import com.rtb.ai.projects.data.model.ContentItem
 import com.rtb.ai.projects.databinding.ItemImageContentBinding
+import com.rtb.ai.projects.util.AppUtil
+import com.rtb.ai.projects.util.AppUtil.copyToClipboard
 
 class ContentAdapter(
     private val onGenerateImage: (itemId: String, prompt: String) -> Unit
@@ -36,14 +38,26 @@ class ContentAdapter(
         fun bind(item: ContentItem.ImageContent) {
 
             binding.progressBarLoading.isVisible = true
+            binding.imageViewContent.setImageResource(R.drawable.image_by_color)
 
-            if (item.image != null) {
+            if (item.imageFilePath != null) {
                 Glide.with(itemView.context)
-                    .load(item.image)
+                    .load(AppUtil.retrieveImageAsByteArray(item.imageFilePath))
                     .placeholder(R.drawable.stories_img)
                     .error(R.drawable.ic_broken_image)
                     .into(imageView)
+
                 binding.progressBarLoading.isVisible = false
+                binding.textViewImagePrompt.text = item.imagePrompt
+
+                binding.imageViewContent.setOnClickListener {
+                   togglePromptVisibility()
+                }
+                
+                binding.imageViewCopyPrompt.setOnClickListener {
+                    item.imagePrompt?.copyToClipboard(binding.root.context)
+                }
+
             } else if (item.imageResId != null) {
                 Glide.with(itemView.context)
                     .load(item.imageResId)
@@ -53,6 +67,14 @@ class ContentAdapter(
                 binding.progressBarLoading.isVisible = false
             }else if(item.imagePrompt != null) {
                 onGenerateImage(item.id, item.imagePrompt)
+            }
+        }
+
+        private fun togglePromptVisibility() {
+            if (binding.groupTextElements.isVisible) {
+                binding.groupTextElements.visibility = View.GONE
+            } else {
+                binding.groupTextElements.visibility = View.VISIBLE
             }
         }
     }

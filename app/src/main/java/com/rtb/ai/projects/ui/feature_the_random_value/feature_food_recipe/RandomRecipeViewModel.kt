@@ -8,9 +8,11 @@ import androidx.lifecycle.viewModelScope
 import com.rtb.ai.projects.data.model.Recipe
 import com.rtb.ai.projects.data.remote.AiRecipeResponse
 import com.rtb.ai.projects.data.repository.RecipeRepository
+import com.rtb.ai.projects.ui.feature_the_random_value.feature_random_story.RandomStoryViewModel
 import com.rtb.ai.projects.util.AppUtil
 import com.rtb.ai.projects.util.AppUtil.convertJsonToObject
 import com.rtb.ai.projects.util.AppUtil.saveByteArrayToInternalFile
+import com.rtb.ai.projects.util.AppUtil.saveToCacheFile
 import com.rtb.ai.projects.util.GeminiAiHelper
 import com.rtb.ai.projects.util.constant.Constants.LOADING
 import dagger.hilt.android.lifecycle.HiltViewModel
@@ -44,30 +46,10 @@ data class RecipeFilters(
 ) : Serializable
 
 data class ImageResult(
-    val image: ByteArray? = null,
+    val imageFilePath: String? = null,
     val isLoading: Boolean = false,
     val errorMessage: String? = null
-) : Serializable {
-    override fun equals(other: Any?): Boolean {
-        if (this === other) return true
-        if (javaClass != other?.javaClass) return false
-
-        other as ImageResult
-
-        if (isLoading != other.isLoading) return false
-        if (!image.contentEquals(other.image)) return false
-        if (errorMessage != other.errorMessage) return false
-
-        return true
-    }
-
-    override fun hashCode(): Int {
-        var result = isLoading.hashCode()
-        result = 31 * result + image.contentHashCode()
-        result = 31 * result + (errorMessage?.hashCode() ?: 0)
-        return result
-    }
-}
+) : Serializable
 
 @HiltViewModel
 class RandomRecipeViewModel @Inject constructor(
@@ -167,10 +149,7 @@ class RandomRecipeViewModel @Inject constructor(
                         generatedAt = System.currentTimeMillis()
                     )
 
-                    insertRecipe(
-                        recipe,
-                        imageResultValue.image ?: ByteArray(0)
-                    )
+                    insertRecipe(recipe, imageResultValue)
                 }
             } else {
 
@@ -192,7 +171,8 @@ class RandomRecipeViewModel @Inject constructor(
         viewModelScope.launch {
 
             val argRecipeId = recipe.id
-            val currRecipeShowing = recipeRepository.getRecipeByRecipeName(recipeUiState.value.recipeName).first()
+            val currRecipeShowing =
+                recipeRepository.getRecipeByRecipeName(recipeUiState.value.recipeName).first()
 
             recipeRepository.deleteRecipeAndFile(recipe)
 
@@ -202,10 +182,12 @@ class RandomRecipeViewModel @Inject constructor(
         }
     }
 
-    private suspend fun insertRecipe(recipe: Recipe, image: ByteArray) {
+    private suspend fun insertRecipe(recipe: Recipe, image: ImageResult) {
         val context = getApplication<Application>().applicationContext
 
-        val filePath = image.saveByteArrayToInternalFile(
+        val imageSavedInCacheDir = AppUtil.retrieveImageAsByteArray(image.imageFilePath)
+
+        val filePath = imageSavedInCacheDir?.saveByteArrayToInternalFile(
             context,
             "recipe_images",
             "${recipe.recipeName}.png"
@@ -253,9 +235,7 @@ class RandomRecipeViewModel @Inject constructor(
 
         updateSavedStateHandleValueForRecipeUIState(recipeUiState)
 
-        val imageResult = ImageResult(image = recipe.imageFilePath?.let { filePath ->
-            AppUtil.retrieveImageAsByteArray(filePath)
-        }, false, null)
+        val imageResult = ImageResult(imageFilePath = recipe.imageFilePath, false, null)
 
         updateSavedStateHandleValueForImageUIState(imageResult)
 
@@ -347,7 +327,13 @@ class RandomRecipeViewModel @Inject constructor(
                             val image = imageResult.get()
                             updateSavedStateHandleValueForImageUIState(
                                 ImageResult(
-                                    image = image,
+                                    imageFilePath = image.saveToCacheFile(
+                                        getApplication<Application>().applicationContext,
+                                        prefix = "cache_recipe_images_${
+                                            imagePrompt.substring(0, 10)
+                                        }",
+                                        suffix = ".png"
+                                    ),
                                     isLoading = false
                                 )
                             )
@@ -482,7 +468,7 @@ class RandomRecipeViewModel @Inject constructor(
                 "**Constraint:** The recipe must be feasible for a home cook and use commonly available ingredients. Do not provide recipes that require highly specialized equipment or exotic ingredients unless explicitly requested." +
                 "Region: " + region + "\n" +
                 "Ingredients: " + ingredients + "\n" +
-                "Other considerations: " + otherConsideration;
+                "Other considerations: " + otherConsideration
     }
 
     // --------------------------------------------------------------------------------------------
@@ -495,5 +481,18 @@ class RandomRecipeViewModel @Inject constructor(
         const val IMAGE_RESULT_KEY = "imageResult" // Unlikely to work directly due to ByteArray
         const val IS_RECIPE_SAVED_TO_DB_KEY = "isRecipeSavedToDb"
         const val TAG = "RandomRecipeViewModel"
+    }
+
+    override fun onCleared() {
+        super.onCleared()
+
+        val isSuccess =
+            AppUtil.clearApplicationCache(getApplication<Application>().applicationContext)
+
+        if (isSuccess) {
+            Log.d(RandomStoryViewModel.Companion.TAG, "onCleared: Cleared all caches from cache directory")
+        }else {
+            Log.d(RandomStoryViewModel.Companion.TAG, "onCleared: Unable to clear the caches from cache directory")
+        }
     }
 }

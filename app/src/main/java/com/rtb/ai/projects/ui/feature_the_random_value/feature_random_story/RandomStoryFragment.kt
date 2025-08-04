@@ -32,6 +32,7 @@ class RandomStoryFragment : Fragment() {
     private val viewModel: RandomStoryViewModel by viewModels()
     private lateinit var contentAdapter: ContentAdapter
     private var isLoading: Boolean = false
+    private var isStoryAlreadySaved = false
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -64,10 +65,21 @@ class RandomStoryFragment : Fragment() {
     }
 
     private fun observeViewModel() {
+
         viewLifecycleOwner.lifecycleScope.launch {
             repeatOnLifecycle(Lifecycle.State.STARTED) {
-                viewModel.uiState.collect { uiState ->
-                    updateUI(uiState)
+
+                launch {
+                    viewModel.uiState.collect { uiState ->
+                        updateUI(uiState)
+                    }
+                }
+
+                launch {
+                    viewModel.isStorySavedToDb.collect {
+                        isStoryAlreadySaved = it
+                        requireActivity().invalidateMenu()
+                    }
                 }
             }
         }
@@ -76,6 +88,7 @@ class RandomStoryFragment : Fragment() {
     private fun updateUI(uiState: RandomStoryUIState) {
 
         isLoading = uiState.isLoading
+        requireActivity().invalidateMenu()
 
         if (uiState.isLoading) {
 
@@ -88,9 +101,6 @@ class RandomStoryFragment : Fragment() {
             binding.contentRecyclerView.visibility = View.VISIBLE
 
             binding.storyTitleTV.text = uiState.storyTitle
-        }
-
-        if (!isLoading && !uiState.isImageLoading) {
             contentAdapter.submitList(uiState.storyContent)
         }
     }
@@ -115,11 +125,11 @@ class RandomStoryFragment : Fragment() {
 
                 saveItem.isVisible = !isLoading
 
-//                if (isImageAlreadySaved) {
-//                    saveItem.setIcon(R.drawable.ic_bookmark_fill)
-//                } else {
-//                    saveItem.setIcon(R.drawable.ic_bookmark_no_fill)
-//                }
+                if (isStoryAlreadySaved) {
+                    saveItem.setIcon(R.drawable.ic_bookmark_fill)
+                } else {
+                    saveItem.setIcon(R.drawable.ic_bookmark_no_fill)
+                }
             }
 
             override fun onMenuItemSelected(menuItem: MenuItem): Boolean {
@@ -147,12 +157,11 @@ class RandomStoryFragment : Fragment() {
 
                     R.id.fr_menu_save -> {
 
-//                        if (!isLoading) {
-//
-//                            viewModel.saveOrDeleteAIImageFromDbBasedOnBookmarkMenuPressed()
-//                        } else {
-//                            showImageGenerationInProgressToast()
-//                        }
+                        if (!isLoading) {
+                            viewModel.saveOrDeleteStoryFromDbBasedOnBookmarkMenuPressed()
+                        } else {
+                            inProgressToast()
+                        }
 
                         true
                     }
