@@ -11,6 +11,7 @@ import android.widget.Toast
 import androidx.core.view.MenuHost
 import androidx.core.view.MenuProvider
 import androidx.fragment.app.Fragment
+import androidx.fragment.app.setFragmentResultListener
 import androidx.fragment.app.viewModels
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.lifecycleScope
@@ -20,6 +21,7 @@ import com.rtb.ai.projects.R
 import com.rtb.ai.projects.databinding.FragmentRandomStoryBinding
 import com.rtb.ai.projects.ui.adapters.ContentAdapter
 import com.rtb.ai.projects.ui.feature_the_random_value.feature_random_story.bottomsheet.StoryInputDialogFragment
+import com.rtb.ai.projects.ui.feature_the_random_value.feature_random_story.bottomsheet.StoryListBottomSheetDialogFragment
 import com.rtb.ai.projects.util.constant.Constants.LOADING
 import dagger.hilt.android.AndroidEntryPoint
 import kotlinx.coroutines.launch
@@ -32,6 +34,7 @@ class RandomStoryFragment : Fragment() {
     private val viewModel: RandomStoryViewModel by viewModels()
     private lateinit var contentAdapter: ContentAdapter
     private var isLoading: Boolean = false
+    private var isImageLoading: Boolean = false
     private var isStoryAlreadySaved = false
 
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -39,6 +42,14 @@ class RandomStoryFragment : Fragment() {
         contentAdapter = ContentAdapter(onGenerateImage = { itemId, prompt ->
             viewModel.generateImageForItem(itemId, prompt)
         })
+
+        setFragmentResultListener(StoryListBottomSheetDialogFragment.REQUEST_KEY_STORY_CLICKED) { requestKey, bundle ->
+            if (requestKey == StoryListBottomSheetDialogFragment.REQUEST_KEY_STORY_CLICKED) {
+                val storyId =
+                    bundle.getLong(StoryListBottomSheetDialogFragment.BUNDLE_KEY_STORY_ID)
+                viewModel.getAndShowStoryById(storyId)
+            }
+        }
     }
 
     override fun onCreateView(
@@ -88,6 +99,7 @@ class RandomStoryFragment : Fragment() {
     private fun updateUI(uiState: RandomStoryUIState) {
 
         isLoading = uiState.isLoading
+        isImageLoading = uiState.isImageLoading
         requireActivity().invalidateMenu()
 
         if (uiState.isLoading) {
@@ -123,7 +135,7 @@ class RandomStoryFragment : Fragment() {
 
                 val saveItem = menu.findItem(R.id.fr_menu_save)
 
-                saveItem.isVisible = !isLoading
+                saveItem.isVisible = !isLoading && !isImageLoading
 
                 if (isStoryAlreadySaved) {
                     saveItem.setIcon(R.drawable.ic_bookmark_fill)
@@ -136,7 +148,7 @@ class RandomStoryFragment : Fragment() {
                 return when (menuItem.itemId) {
                     R.id.fr_menu_filter -> {
 
-                        if (!isLoading) {
+                        if (!isLoading && !isImageLoading) {
                             showStoryInputDialog()
                         } else {
                             inProgressToast()
@@ -146,7 +158,7 @@ class RandomStoryFragment : Fragment() {
 
                     R.id.fr_menu_refresh -> {
 
-                        if (!isLoading) {
+                        if (!isLoading && !isImageLoading) {
                             viewModel.generateRandomStory(null)
                         } else {
                             inProgressToast()
@@ -157,7 +169,7 @@ class RandomStoryFragment : Fragment() {
 
                     R.id.fr_menu_save -> {
 
-                        if (!isLoading) {
+                        if (!isLoading && !isImageLoading) {
                             viewModel.saveOrDeleteStoryFromDbBasedOnBookmarkMenuPressed()
                         } else {
                             inProgressToast()
@@ -168,22 +180,22 @@ class RandomStoryFragment : Fragment() {
 
                     R.id.fr_menu_show_list -> {
 
-//                        if (!isLoading) {
-//                            showSavedImagesBottomSheet()
-//                        } else {
-//                            showImageGenerationInProgressToast()
-//                        }
+                        if (!isLoading && !isImageLoading) {
+                            showSavedStoriesBottomSheet()
+                        } else {
+                            inProgressToast()
+                        }
 
                         true
                     }
 
                     R.id.fr_menu_download -> {
 
-//                        if (!isLoading) {
-//                            viewModel.downloadCurrentImage()
-//                        }else{
-//                            showImageGenerationInProgressToast()
-//                        }
+                        if (!isLoading && !isImageLoading) {
+                            viewModel.downloadCurrentStoryAsPdf()
+                        } else {
+                            inProgressToast()
+                        }
 
                         true
                     }
@@ -193,6 +205,12 @@ class RandomStoryFragment : Fragment() {
             }
         }, viewLifecycleOwner, Lifecycle.State.RESUMED) // Add provider with lifecycle awareness
 
+    }
+
+    private fun showSavedStoriesBottomSheet() {
+
+        val dialog = StoryListBottomSheetDialogFragment.newInstance()
+        dialog.show(parentFragmentManager, StoryListBottomSheetDialogFragment.TAG)
     }
 
     // In your Fragment

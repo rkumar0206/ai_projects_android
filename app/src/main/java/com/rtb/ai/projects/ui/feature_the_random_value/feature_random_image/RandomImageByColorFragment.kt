@@ -24,6 +24,7 @@ import com.rtb.ai.projects.ui.feature_the_random_value.feature_random_image.bott
 import com.rtb.ai.projects.ui.feature_the_random_value.feature_random_image.bottomsheet.SavedImagesBottomSheet
 import com.rtb.ai.projects.util.AppUtil
 import com.rtb.ai.projects.util.AppUtil.copyToClipboard
+import com.rtb.ai.projects.util.AppUtil.displayMarkdownWithMarkwon
 import com.rtb.ai.projects.util.constant.ImageCategoryTag
 import dagger.hilt.android.AndroidEntryPoint
 import kotlinx.coroutines.launch
@@ -125,7 +126,7 @@ class RandomImageByColorFragment : Fragment() {
                 .error(R.drawable.ic_broken_image) // Error placeholder
                 .into(binding.imageViewGenerated)
 
-            binding.textViewImagePrompt.text = uiState.imagePrompt
+            binding.textViewImagePrompt.displayMarkdownWithMarkwon(requireContext(), uiState.imagePrompt)
             binding.groupTextElements.visibility = View.VISIBLE
 
         } else {

@@ -2,6 +2,7 @@ package com.rtb.ai.projects.ui.feature_the_random_value.feature_random_story
 
 import android.app.Application
 import android.util.Log
+import android.widget.Toast
 import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.viewModelScope
@@ -17,13 +18,18 @@ import com.rtb.ai.projects.util.AppUtil.retrieveImageAsByteArray
 import com.rtb.ai.projects.util.AppUtil.saveByteArrayToInternalFile
 import com.rtb.ai.projects.util.AppUtil.saveToCacheFile
 import com.rtb.ai.projects.util.GeminiAiHelper
+import com.rtb.ai.projects.ui.feature_the_random_value.feature_random_story.util.StoryPdfGenerator
 import com.rtb.ai.projects.util.constant.Constants
 import com.rtb.ai.projects.util.constant.Constants.LOADING
+import com.rtb.ai.projects.util.constant.Constants.TYPE_IMAGE
+import com.rtb.ai.projects.util.constant.Constants.TYPE_TEXT
 import com.rtb.ai.projects.util.constant.ImageCategoryTag
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.delay
+import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.first
+import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
 import java.io.Serializable
 import java.util.UUID
@@ -31,6 +37,7 @@ import javax.inject.Inject
 
 data class RandomStoryUIState(
     val isLoading: Boolean = false,
+    val isImageLoading: Boolean = false,
     val storyTitle: String? = null,
     val storyContent: List<ContentItem> = emptyList(),
     val errorMessage: String? = null
@@ -48,8 +55,6 @@ class RandomStoryViewModel @Inject constructor(
     companion object {
         const val UI_STATE_KEY = "ui_state_key"
         const val IS_STORY_SAVED_TO_DB_KEY = "isStorySavedToDb"
-        const val TYPE_TEXT = "TEXT"
-        const val TYPE_IMAGE = "IMAGE"
         const val TAG = "RandomStoryViewModel"
     }
 
@@ -115,6 +120,13 @@ class RandomStoryViewModel @Inject constructor(
     }
 
     // ---------------------------------- DB -----------------------------------
+
+    fun allStories(): StateFlow<List<AIStory>> = aiStoryRepository.getAllStories()
+        .stateIn(
+            scope = viewModelScope,
+            started = SharingStarted.WhileSubscribed(5000L), // Keep upstream flow active for 5s after last subscriber gone
+            initialValue = emptyList()
+        )
 
     fun saveOrDeleteStoryFromDbBasedOnBookmarkMenuPressed() {
 
@@ -378,7 +390,7 @@ class RandomStoryViewModel @Inject constructor(
             return
         }
 
-        savedStateHandle[UI_STATE_KEY] = uiState.value.copy()
+        savedStateHandle[UI_STATE_KEY] = uiState.value.copy(isImageLoading = true)
         viewModelScope.launch {
 
             delay(800)
@@ -413,6 +425,7 @@ class RandomStoryViewModel @Inject constructor(
                             error
                         )
                         imageGenerationInProgress.remove(itemId)
+                        savedStateHandle[UI_STATE_KEY] = uiState.value.copy(isImageLoading = false)
                     }
             } else {
                 val imageBytes = retrieveImageAsByteArray(aiImageFromDb.imageFilePath)
@@ -439,7 +452,7 @@ class RandomStoryViewModel @Inject constructor(
             }
         }
         savedStateHandle[UI_STATE_KEY] =
-            currentState.copy(storyContent = updatedContent)
+            currentState.copy(storyContent = updatedContent, isImageLoading = false)
         Log.d(TAG, "updateImageInStoryContent: Updated image for item $itemId")
     }
 
@@ -522,6 +535,34 @@ class RandomStoryViewModel @Inject constructor(
         return storyPrompt
     }
 
+    fun downloadCurrentStoryAsPdf() {
+
+        viewModelScope.launch {
+            val context = getApplication<Application>().applicationContext
+
+            StoryPdfGenerator.generatePdf(
+                uiState.value.storyTitle,
+                uiState.value.storyContent
+            )
+                ?.onSuccess { outputFilePath ->
+                    Log.d(TAG, "downloadCurrentStoryAsPdf: Story downloaded")
+                    Toast.makeText(
+                        context,
+                        "PDF generated successfully at $outputFilePath",
+                        Toast.LENGTH_LONG
+                    ).show()
+                }
+                ?.onFailure { e ->
+                    Log.d(TAG, "downloadCurrentStoryAsPdf: Story download failed")
+                    Toast.makeText(
+                        context,
+                        "Error writing PDF to file: ${e.message}",
+                        Toast.LENGTH_LONG
+                    ).show()
+                }
+        }
+    }
+
     override fun onCleared() {
         super.onCleared()
 
@@ -530,7 +571,7 @@ class RandomStoryViewModel @Inject constructor(
 
         if (isSuccess) {
             Log.d(TAG, "onCleared: Cleared all caches from cache directory")
-        }else {
+        } else {
             Log.d(TAG, "onCleared: Unable to clear the caches from cache directory")
         }
     }
