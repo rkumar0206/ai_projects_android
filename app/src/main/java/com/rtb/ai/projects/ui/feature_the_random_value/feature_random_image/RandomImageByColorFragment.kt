@@ -54,6 +54,15 @@ class RandomImageByColorFragment : Fragment() {
                 }
             }
         }
+
+        setFragmentResultListener(SavedImagesBottomSheet.REQUEST_KEY_IMAGE_CLICKED) { requestKey, bundle ->
+            if (requestKey == SavedImagesBottomSheet.REQUEST_KEY_IMAGE_CLICKED) {
+                val imageId = bundle.getLong(SavedImagesBottomSheet.BUNDLE_KEY_IMAGE_ID, -1L)
+                if (imageId != -1L) {
+                    viewModel.getAndShowSelectedImage(imageId)
+                }
+            }
+        }
     }
 
     override fun onCreateView(
