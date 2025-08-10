@@ -3,7 +3,7 @@
 ## 1. Prompt refiner
 https://github.com/user-attachments/assets/7df0c00e-0f87-467b-802f-e91d751ae970
 
-## 2. Eandom food recipe
+## 2. Random food recipe
 https://github.com/user-attachments/assets/6b177d39-7db9-451b-a399-93f3b88fff95
 
 ## 3. Random Image Generator By Keywords
