@@ -98,4 +98,54 @@
     <string name="protagonist">Protagonist</string>
     <string name="antagonist">Antagonist</string>
     <string name="story_parameters">Story Parameters</string>
+    <string name="programming">Programming</string>
+    <string name="dsa_problem">DSA problem</string>
+    <string name="copy_problem">Copy Problem</string>
+    <string name="filter_dsa_problems">Filter DSA Problems</string>
+    <string name="data_structure_type">Data Structure Type</string>
+    <string name="algorithm_type">Algorithm Type</string>
+    <string name="programming_language">Programming Language</string>
+    <string name="complexity">Complexity</string>
+    <string name="other_considerations_optional">Other Considerations (Optional)</string>
+
+    <string-array name="data_structure_types">
+        <item>Select Data Structure</item>
+        <item>Array</item>
+        <item>Linked List</item>
+        <item>Tree</item>
+        <item>Graph</item>
+        <item>Heap</item>
+        <item>Hash Map</item>
+        <item>Stack</item>
+        <item>Queue</item>
+    </string-array>
+
+    <string-array name="algorithm_types">
+        <item>Select Algorithm Type</item>
+        <item>Dynamic Programming</item>
+        <item>Greedy</item>
+        <item>Sorting</item>
+        <item>Searching</item>
+        <item>DFS</item>
+        <item>BFS</item>
+        <item>Backtracking</item>
+        <item>Divide and Conquer</item>
+    </string-array>
+
+    <string-array name="programming_languages">
+        <item>Select Language</item>
+        <item>Java</item>
+        <item>Kotlin</item>
+        <item>Python</item>
+        <item>C++</item>
+        <item>JavaScript</item>
+        <item>Go</item>
+    </string-array>
+
+    <string-array name="complexity_levels">
+        <item>Select Complexity</item>
+        <item>Easy</item>
+        <item>Medium</item>
+        <item>Hard</item>
+    </string-array>
 </resources>

@@ -19,6 +19,9 @@
         <action
             android:id="@+id/action_TrvCategoryFragment_to_randomStoryFragment"
             app:destination="@id/randomStoryFragment" />
+        <action
+            android:id="@+id/action_TrvCategoryFragment_to_programmingCategoryFragment"
+            app:destination="@id/programmingCategoryFragment" />
     </fragment>
     <fragment
         android:id="@+id/randomRecipeFragment"
@@ -70,5 +73,27 @@
         <action
             android:id="@+id/action_randomStoryFragment_to_TrvCategoryFragment"
             app:destination="@id/TrvCategoryFragment" />
+    </fragment>
+    <fragment
+        android:id="@+id/programmingCategoryFragment"
+        android:name="com.rtb.ai.projects.ui.feature_the_random_value.feature_programming.ProgrammingCategoryFragment"
+        android:label="Programming"
+        tools:layout="@layout/fragment_trv_category"
+        >
+        <action
+            android:id="@+id/action_programmingCategoryFragment_to_TrvCategoryFragment"
+            app:destination="@id/TrvCategoryFragment" />
+        <action
+            android:id="@+id/action_programmingCategoryFragment_to_randomDSAProblemFragment"
+            app:destination="@id/randomDSAProblemFragment" />
+    </fragment>
+    <fragment
+        android:id="@+id/randomDSAProblemFragment"
+        android:name="com.rtb.ai.projects.ui.feature_the_random_value.feature_programming.feature_random_dsa_problem.RandomDSAProblemFragment"
+        android:label="Random DSA Problem"
+        tools:layout="@layout/fragment_random_d_s_a_problem" >
+        <action
+            android:id="@+id/action_randomDSAProblemFragment_to_programmingCategoryFragment"
+            app:destination="@id/programmingCategoryFragment" />
     </fragment>
 </navigation>

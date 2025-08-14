@@ -1,4 +1,4 @@
-package com.rtb.ai.projects.ui.feature_the_random_value
+package com.rtb.ai.projects.ui.feature_the_random_value.feature_programming
 
 import android.os.Bundle
 import android.view.LayoutInflater
@@ -12,10 +12,7 @@ import com.rtb.ai.projects.data.model.AIProjectCategory
 import com.rtb.ai.projects.databinding.FragmentTrvCategoryBinding
 import com.rtb.ai.projects.ui.adapters.AIProjectsCategoriesAdapter
 
-/**
- * A simple [Fragment] subclass as the default destination in the navigation.
- */
-class TrvCategoryFragment : Fragment() {
+class ProgrammingCategoryFragment : Fragment() {
 
     private var _binding: FragmentTrvCategoryBinding? = null
     private lateinit var projectCategoryAdapter: AIProjectsCategoriesAdapter
@@ -59,23 +56,8 @@ class TrvCategoryFragment : Fragment() {
         when (category.id) {
 
             0 -> {
-                // Navigate to RandomRecipeFragment
-                // Use the action ID defined in your navigation graph
-                findNavController().navigate(R.id.action_TrvCategoryFragment_to_randomRecipeFragment)
+                findNavController().navigate(R.id.action_programmingCategoryFragment_to_randomDSAProblemFragment)
             }
-
-            1 -> {
-                findNavController().navigate(R.id.action_TrvCategoryFragment_to_imageGenerationCategoryFragment)
-            }
-
-            2 -> {
-                findNavController().navigate(R.id.action_TrvCategoryFragment_to_randomStoryFragment)
-            }
-
-            3 -> {
-                findNavController().navigate(R.id.action_TrvCategoryFragment_to_programmingCategoryFragment)
-            }
-
         }
 
     }
@@ -83,11 +65,11 @@ class TrvCategoryFragment : Fragment() {
     private fun getCategories(): List<AIProjectCategory> {
 
         return listOf(
-            AIProjectCategory(0, R.drawable.food_recipe_img, getString(R.string.food_recipe)),
-            AIProjectCategory(1, R.drawable.images_img, getString(R.string.images)),
-            AIProjectCategory(2, R.drawable.stories_img, getString(R.string.stories)),
-            AIProjectCategory(3, R.drawable.programming_cat_img, getString(R.string.programming)),
-            AIProjectCategory(4, R.drawable.github_img, getString(R.string.github)),
+            AIProjectCategory(
+                0,
+                R.drawable.dsa_img,
+                getString(R.string.dsa_problem)
+            )
         )
     }
 
